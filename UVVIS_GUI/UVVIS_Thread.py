@@ -248,34 +248,17 @@ class ShowPreviewMap(QThread):
     def run(self):
         global left_rect, right_rect
         self.ThreadActive = True
-        Capture = cv2.VideoCapture(1,cv2.CAP_MSMF)
-        image_size = Resolution()
-        image_size.width = 1280
-        image_size.height = 720
-        # Set the video resolution to HD720
-        Capture.set(cv2.CAP_PROP_FRAME_WIDTH, image_size.width*2)
-        Capture.set(cv2.CAP_PROP_FRAME_HEIGHT, image_size.height)
-        
-        if self.path!="":
-            camera_matrix_left, camera_matrix_right, map_left_x, map_left_y, map_right_x, map_right_y = ShowImageOnInterface.init_calibration(self, self.path, image_size)
         while self.ThreadActive:
             mutex.lock()
-            if Capture.isOpened(): # try to get the first frame
-                ret, frame = Capture.read()
+            if self.path!="" and self.activateRectification==True:
+                left_rect = cv2.resize(left_rect, (800,600), interpolation= cv2.INTER_LINEAR)
+                Image = cv2.cvtColor(left_rect, cv2.COLOR_BGR2RGB)
+                Image = cv2.circle(Image, (300,300), 1, (0,255,255), 3)
+                convertToQtformat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888)   
+                Pic = convertToQtformat.scaled(611, 451, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.ImageUpdate.emit(Pic)
             else:
-                ret = False
-            if ret:
-                # Extract left and right images from side-by-side
-                left_right_image = np.split(frame, 2, axis=1)
-                if self.path!="" and self.activateRectification==True:
-                    left_rect = cv2.remap(left_right_image[0], map_left_x, map_left_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
-                    left_rect = cv2.resize(left_rect, (800,600), interpolation= cv2.INTER_LINEAR)
-                    Image = cv2.cvtColor(left_rect, cv2.COLOR_BGR2RGB)
-                    convertToQtformat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888)   
-                    Pic = convertToQtformat.scaled(611, 451, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                    self.ImageUpdate.emit(Pic)
-                else:
-                    print(str(self.activateRectification))                    
+                print(str(self.activateRectification))                    
             mutex.unlock()
     def ImageUpdateSlot (self, PicDepth):
         self.DepthImage.emit(PicDepth)

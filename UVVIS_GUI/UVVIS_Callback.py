@@ -35,13 +35,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.Disparity_Map_Bt.clicked.connect(lambda: self.showmapadisparidad())
         self.ShowImageOnInterface = ShowImageOnInterface("", False)
         self.Preview_camera.mousePressEvent = self.CalculateDepth
-        
+
     def CalculateDepth(self, event):
-        x = event.pos().x()
-        y = event.pos().y()    
-        self.q = QImage()
-        rgb = self.q.pixel(x, y)
-        
+        self.x = event.pos().x()
+        self.y = event.pos().y()           
     
     def open_dialog_box(self):
         filename = QFileDialog.getOpenFileName()
@@ -86,14 +83,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.disparity_map.setPixmap(QPixmap.fromImage(Image))
     
     def ImageUpdatePreview(self, Image):
-        self.q=Image
-        self.Preview_camera.setPixmap(QPixmap.fromImage(Image))
+        self.mQImage = Image
+        self.Preview_camera.setPixmap(QPixmap.fromImage(self.mQImage))
         
-    def Next_Config(self):
-        self.ShowImageOnInterface.stop() 
+    def Next_Config(self): 
         self.ShowPreviewMap = ShowPreviewMap(self.path,self.ActivateRectification)
         self.ShowPreviewMap.start()
         self.ShowPreviewMap.ImageUpdate.connect(self.ImageUpdatePreview)
+
+        
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
