@@ -9,9 +9,11 @@ from PyQt5.QtGui import QImage
 from PyQt5.QtCore import pyqtSignal,QThread, Qt, QMutex 
 import configparser
 import cv2
-
+import config
 left_rect=np.zeros((1,1,1), np.uint8) 
 right_rect=np.zeros((1,1,1), np.uint8)
+scale_x=0
+scale_y=0
 mutex = QMutex()
 
 class Resolution :
@@ -59,13 +61,13 @@ class ShowImageOnInterface(QThread):
                 else:
                     Image = cv2.cvtColor(left_right_image[0], cv2.COLOR_BGR2RGB)
                     Image1 = cv2.cvtColor(left_right_image[1], cv2.COLOR_BGR2RGB)
-                
-                convertToQtformat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888)   
-                convertToQtformat1 = QImage(Image1.data, Image1.shape[1], Image1.shape[0], QImage.Format_RGB888)
-                Pic = convertToQtformat.scaled(416, 299, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                Pic1 = convertToQtformat1.scaled(416, 299, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self.ImageUpdate.emit(Pic)
-                self.ImageUpdate1.emit(Pic1)
+                if config.ViewActivate==False:
+                    convertToQtformat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888)   
+                    convertToQtformat1 = QImage(Image1.data, Image1.shape[1], Image1.shape[0], QImage.Format_RGB888)
+                    Pic = convertToQtformat.scaled(250, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    Pic1 = convertToQtformat1.scaled(250, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    self.ImageUpdate.emit(Pic)
+                    self.ImageUpdate1.emit(Pic1)
             mutex.unlock()
     def ImageUpdateSlot (self, PicDepth):
         self.DepthImage.emit(PicDepth)
@@ -162,7 +164,7 @@ class ShowImageOnInterface(QThread):
         return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y
 
 class ShowDepthMap(QThread):
-    global left_rect, right_rect
+    global left_rect, right_rect, scale_x, scale_y
     ImageUpdate = pyqtSignal(QImage)
     
     def __init__(self):
@@ -224,11 +226,12 @@ class ShowDepthMap(QThread):
             _, disparity = cv2.threshold(disparity,0, max_disparity * 16, cv2.THRESH_TOZERO)
             disparity_scaled = (disparity / 16.).astype(np.uint8) 
             Image = cv2.applyColorMap((disparity_scaled * (256. / max_disparity)).astype(np.uint8), cv2.COLORMAP_HOT)
-                      
+            Disparity = disparity_scaled[scale_y, scale_x]
             #Image = cv2.cvtColor(disparity_scaled, cv2.COLOR_GRAY2BGR)            
-            ConvertToQtFormat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888) 
-            PicDepth = ConvertToQtFormat.scaled(416, 299, Qt.KeepAspectRatio)
-            self.ImageUpdate.emit(PicDepth)
+            if config.ViewActivate==False:
+                ConvertToQtFormat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888) 
+                PicDepth = ConvertToQtFormat.scaled(250, 200, Qt.KeepAspectRatio)
+                self.ImageUpdate.emit(PicDepth)
             mutex.unlock()
             
     def stop(self):
@@ -244,22 +247,24 @@ class ShowPreviewMap(QThread):
         self.path = path
         self.activateRectification=activateRectification
         
-        
     def run(self):
-        global left_rect, right_rect
         self.ThreadActive = True
+        global scale_x, scale_y
         while self.ThreadActive:
             mutex.lock()
             if self.path!="" and self.activateRectification==True:
-                left_rect = cv2.resize(left_rect, (800,600), interpolation= cv2.INTER_LINEAR)
-                Image = cv2.cvtColor(left_rect, cv2.COLOR_BGR2RGB)
-                Image = cv2.circle(Image, (300,300), 1, (0,255,255), 3)
-                convertToQtformat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888)   
-                Pic = convertToQtformat.scaled(611, 451, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self.ImageUpdate.emit(Pic)
+                if config.ViewActivate==True:
+                    Image = cv2.cvtColor(left_rect, cv2.COLOR_BGR2RGB)
+                    scale_x = int(config.x*(Image.shape[1]/770))
+                    scale_y = int(config.y*(Image.shape[0]/320))
+                    Image = cv2.circle(Image, (scale_x,scale_y), 1, (0,255,255), 3)
+                    convertToQtformat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888)   
+                    Pic = convertToQtformat.scaled(770, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    self.ImageUpdate.emit(Pic)
             else:
                 print(str(self.activateRectification))                    
             mutex.unlock()
+
     def ImageUpdateSlot (self, PicDepth):
         self.DepthImage.emit(PicDepth)
                 

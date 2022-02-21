@@ -8,9 +8,9 @@ from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QFileDialog
 from UVVIS_Thread import *
 from UVVIS_GUI import *
- 
-  
+import config
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    
     def __init__(self, *args, **kwargs):
         QtWidgets.QMainWindow.__init__(self, *args, **kwargs)
         self.setupUi(self)
@@ -29,17 +29,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.Preview.clicked.connect(lambda: self.ActivateCamera())
         self.pushButton_3.setEnabled(False)
         self.pushButton_3.clicked.connect(lambda: self.Next_Config())
-    
+        self.Back_1.clicked.connect(lambda: self.Activate1())
         self.pushButton_2.clicked.connect(lambda: self.open_dialog_box())
         self.Rectification_2.clicked.connect(lambda: self.RectificactionCamera())
         self.Disparity_Map_Bt.clicked.connect(lambda: self.showmapadisparidad())
-        self.ShowImageOnInterface = ShowImageOnInterface("", False)
+        self.ShowImageOnInterface = ShowImageOnInterface(" ", False)
+        self.ShowPreviewMap = ShowPreviewMap(" ", False)
+        self.ShowDepthMap = ShowDepthMap()
         self.Preview_camera.mousePressEvent = self.CalculateDepth
-
+        
     def CalculateDepth(self, event):
-        self.x = event.pos().x()
-        self.y = event.pos().y()           
-    
+        config.x = event.pos().x()
+        config.y = event.pos().y()   
+        
     def open_dialog_box(self):
         filename = QFileDialog.getOpenFileName()
         self.path = filename[0]
@@ -52,26 +54,26 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.right_rect=Image
         
     def ActivateCamera(self):
-        self.ShowImageOnInterface.stop()
         self.ActivateRectification=False
         self.ShowImageOnInterface = ShowImageOnInterface("", self.ActivateRectification)
-        self.ShowImageOnInterface.start()
-        self.ShowImageOnInterface.ImageUpdate.connect(self.ImageUpdateSlot)
-        self.ShowImageOnInterface.ImageUpdate1.connect(self.ImageUpdateSlot1)
+        if self.ShowImageOnInterface.isFinished:
+            self.ShowImageOnInterface.start()
+            self.ShowImageOnInterface.ImageUpdate.connect(self.ImageUpdateSlot)
+            self.ShowImageOnInterface.ImageUpdate1.connect(self.ImageUpdateSlot1)
         
     def RectificactionCamera(self):
-        self.ShowImageOnInterface.stop()
         self.ActivateRectification=True
         self.ShowImageOnInterface = ShowImageOnInterface(self.path,self.ActivateRectification)
-        self.ShowImageOnInterface.start()
-        self.ShowImageOnInterface.ImageUpdate.connect(self.ImageUpdateSlot)
-        self.ShowImageOnInterface.ImageUpdate1.connect(self.ImageUpdateSlot1)   
+        if self.ShowImageOnInterface.isFinished:
+            self.ShowImageOnInterface.start()       
+            self.ShowImageOnInterface.ImageUpdate.connect(self.ImageUpdateSlot)
+            self.ShowImageOnInterface.ImageUpdate1.connect(self.ImageUpdateSlot1)   
     
     def showmapadisparidad(self):
-        self.ShowDepthMap = ShowDepthMap()
-        self.ShowDepthMap.start()
-        self.ShowDepthMap.ImageUpdate.connect(self.ImageUpdateSlotDepth)
-        self.pushButton_3.setEnabled(True)
+        if self.ShowDepthMap.isFinished:
+            self.ShowDepthMap.start()
+            self.ShowDepthMap.ImageUpdate.connect(self.ImageUpdateSlotDepth)
+            self.pushButton_3.setEnabled(True)
                 
     def ImageUpdateSlot(self, Image):
         self.left_camera.setPixmap(QPixmap.fromImage(Image))
@@ -83,16 +85,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.disparity_map.setPixmap(QPixmap.fromImage(Image))
     
     def ImageUpdatePreview(self, Image):
-        self.mQImage = Image
-        self.Preview_camera.setPixmap(QPixmap.fromImage(self.mQImage))
-        
+        self.Preview_camera.setPixmap(QPixmap.fromImage(Image))
+    
     def Next_Config(self): 
         self.ShowPreviewMap = ShowPreviewMap(self.path,self.ActivateRectification)
-        self.ShowPreviewMap.start()
-        self.ShowPreviewMap.ImageUpdate.connect(self.ImageUpdatePreview)
-
-        
-
+        if self.ShowPreviewMap.isFinished:
+            self.ShowPreviewMap.start()
+            config.ViewActivate=True
+            self.ShowPreviewMap.ImageUpdate.connect(self.ImageUpdatePreview)
+    
+    def Activate1(self):
+        config.ViewActivate=False
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     window = MainWindow()
