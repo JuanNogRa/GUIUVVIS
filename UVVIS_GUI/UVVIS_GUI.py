@@ -144,7 +144,7 @@ class Ui_MainWindow(object):
 "}")
         self.bn_home.setText("")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("../../../Documents/GUIUVVIS/Minimalistic-Flat-Modern-GUI-Template-master/icons/1x/homeAsset 46.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("Images/homeAsset 46.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.bn_home.setIcon(icon)
         self.bn_home.setIconSize(QtCore.QSize(22, 22))
         self.bn_home.setFlat(True)
@@ -181,7 +181,7 @@ class Ui_MainWindow(object):
 "}")
         self.bn_VIPerson.setText("")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("D:/Descargas/Minimalistic-Flat-Modern-GUI-Template-master/Minimalistic-Flat-Modern-GUI-Template-master/icons/1x/VisualImpare.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon1.addPixmap(QtGui.QPixmap("Images/VisualImpare.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.bn_VIPerson.setIcon(icon1)
         self.bn_VIPerson.setIconSize(QtCore.QSize(30, 40))
         self.bn_VIPerson.setFlat(True)
@@ -218,7 +218,7 @@ class Ui_MainWindow(object):
 "}")
         self.bn_logItemRegister.setText("")
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap("../../../Documents/GUIUVVIS/Minimalistic-Flat-Modern-GUI-Template-master/icons/1x/recordfile.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap("Images/recordfile.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.bn_logItemRegister.setIcon(icon2)
         self.bn_logItemRegister.setIconSize(QtCore.QSize(22, 22))
         self.bn_logItemRegister.setFlat(True)
@@ -255,7 +255,7 @@ class Ui_MainWindow(object):
 "}")
         self.bn_bug.setText("")
         icon3 = QtGui.QIcon()
-        icon3.addPixmap(QtGui.QPixmap("../../../Documents/GUIUVVIS/Minimalistic-Flat-Modern-GUI-Template-master/icons/1x/bugAsset 47.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon3.addPixmap(QtGui.QPixmap("Images/bugAsset 47.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.bn_bug.setIcon(icon3)
         self.bn_bug.setIconSize(QtCore.QSize(22, 22))
         self.bn_bug.setFlat(True)
@@ -683,6 +683,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_6 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_6.setObjectName("horizontalLayout_6")
         self.Disparity_Map_Bt = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
+        self.Disparity_Map_Bt.setEnabled(False)
         self.Disparity_Map_Bt.setStyleSheet("QPushButton {\n"
 "    color:white;\n"
 "    border:1px solid rgb(51,51,51);    \n"
@@ -698,6 +699,7 @@ class Ui_MainWindow(object):
         self.Disparity_Map_Bt.setObjectName("Disparity_Map_Bt")
         self.horizontalLayout_6.addWidget(self.Disparity_Map_Bt)
         self.pushButton_3 = QtWidgets.QPushButton(self.verticalLayoutWidget_2)
+        self.pushButton_3.setEnabled(False)
         self.pushButton_3.setStyleSheet("QPushButton {\n"
 "    color:white;\n"
 "    border:1px solid rgb(51,51,51);    \n"
@@ -713,6 +715,11 @@ class Ui_MainWindow(object):
         icon5 = QtGui.QIcon()
         icon5.addPixmap(QtGui.QPixmap("Images/ForwardAsset.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushButton_3.setIcon(icon5)
+        self.pushButton_3.setCheckable(False)
+        self.pushButton_3.setChecked(False)
+        self.pushButton_3.setAutoDefault(False)
+        self.pushButton_3.setDefault(False)
+        self.pushButton_3.setFlat(False)
         self.pushButton_3.setObjectName("pushButton_3")
         self.horizontalLayout_6.addWidget(self.pushButton_3)
         self.verticalLayout_5.addLayout(self.horizontalLayout_6)
@@ -764,7 +771,7 @@ class Ui_MainWindow(object):
         self.groupBox_10.setGeometry(QtCore.QRect(10, 330, 361, 241))
         self.groupBox_10.setObjectName("groupBox_10")
         self.formLayoutWidget_5 = QtWidgets.QWidget(self.groupBox_10)
-        self.formLayoutWidget_5.setGeometry(QtCore.QRect(10, 20, 341, 213))
+        self.formLayoutWidget_5.setGeometry(QtCore.QRect(10, 20, 341, 201))
         self.formLayoutWidget_5.setObjectName("formLayoutWidget_5")
         self.formLayout_5 = QtWidgets.QFormLayout(self.formLayoutWidget_5)
         self.formLayout_5.setContentsMargins(0, 0, 0, 0)
@@ -794,15 +801,6 @@ class Ui_MainWindow(object):
         self.Angle_Alpha.setText("")
         self.Angle_Alpha.setObjectName("Angle_Alpha")
         self.formLayout_5.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.Angle_Alpha)
-        self.label_50 = QtWidgets.QLabel(self.formLayoutWidget_5)
-        self.label_50.setStyleSheet("color:white;")
-        self.label_50.setObjectName("label_50")
-        self.formLayout_5.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.label_50)
-        self.Angle_Theta = QtWidgets.QLabel(self.formLayoutWidget_5)
-        self.Angle_Theta.setStyleSheet("color:white;")
-        self.Angle_Theta.setText("")
-        self.Angle_Theta.setObjectName("Angle_Theta")
-        self.formLayout_5.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.Angle_Theta)
         self.label_51 = QtWidgets.QLabel(self.formLayoutWidget_5)
         self.label_51.setStyleSheet("color:white;")
         self.label_51.setObjectName("label_51")
@@ -825,9 +823,43 @@ class Ui_MainWindow(object):
         self.Depth_Angle_play.setIcon(icon6)
         self.Depth_Angle_play.setObjectName("Depth_Angle_play")
         self.formLayout_5.setWidget(5, QtWidgets.QFormLayout.FieldRole, self.Depth_Angle_play)
+        self.Preview_camera = QtWidgets.QLabel(self.groupBox)
+        self.Preview_camera.setGeometry(QtCore.QRect(10, 10, 360, 320))
+        self.Preview_camera.setStyleSheet("color:white;")
+        self.Preview_camera.setAlignment(QtCore.Qt.AlignCenter)
+        self.Preview_camera.setObjectName("Preview_camera")
+        self.groupBox_11 = QtWidgets.QGroupBox(self.groupBox)
+        self.groupBox_11.setGeometry(QtCore.QRect(410, 330, 361, 241))
+        self.groupBox_11.setObjectName("groupBox_11")
+        self.formLayoutWidget_7 = QtWidgets.QWidget(self.groupBox_11)
+        self.formLayoutWidget_7.setGeometry(QtCore.QRect(10, 20, 341, 201))
+        self.formLayoutWidget_7.setObjectName("formLayoutWidget_7")
+        self.formLayout_7 = QtWidgets.QFormLayout(self.formLayoutWidget_7)
+        self.formLayout_7.setContentsMargins(0, 0, 0, 0)
+        self.formLayout_7.setObjectName("formLayout_7")
+        self.Depth_Angle_play_2 = QtWidgets.QPushButton(self.formLayoutWidget_7)
+        self.Depth_Angle_play_2.setStyleSheet("QPushButton {\n"
+"    color:white;\n"
+"    border:1px solid rgb(51,51,51);    \n"
+"    border-radius:4px;\n"
+"    background-color: rgba(0,0,0,0);\n"
+"}\n"
+"QPushButton:hover {\n"
+"    background-color: rgb(91,90,90);\n"
+"}\n"
+"QPushButton:pressed {    \n"
+"    background-color: rgba(0,0,0,0);\n"
+"}")
+        self.Depth_Angle_play_2.setIcon(icon6)
+        self.Depth_Angle_play_2.setObjectName("Depth_Angle_play_2")
+        self.formLayout_7.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.Depth_Angle_play_2)
+        self.label_55 = QtWidgets.QLabel(self.formLayoutWidget_7)
+        self.label_55.setStyleSheet("color:white;")
+        self.label_55.setObjectName("label_55")
+        self.formLayout_7.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_55)
         self.horizontalLayout_21 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_21.setObjectName("horizontalLayout_21")
-        self.Back_1 = QtWidgets.QPushButton(self.formLayoutWidget_5)
+        self.Back_1 = QtWidgets.QPushButton(self.formLayoutWidget_7)
         self.Back_1.setStyleSheet("QPushButton {\n"
 "    color:white;\n"
 "    border:1px solid rgb(51,51,51);    \n"
@@ -845,7 +877,8 @@ class Ui_MainWindow(object):
         self.Back_1.setIcon(icon7)
         self.Back_1.setObjectName("Back_1")
         self.horizontalLayout_21.addWidget(self.Back_1)
-        self.Next_1 = QtWidgets.QPushButton(self.formLayoutWidget_5)
+        self.Next_1 = QtWidgets.QPushButton(self.formLayoutWidget_7)
+        self.Next_1.setEnabled(False)
         self.Next_1.setStyleSheet("QPushButton {\n"
 "    color:white;\n"
 "    border:1px solid rgb(51,51,51);    \n"
@@ -861,12 +894,12 @@ class Ui_MainWindow(object):
         self.Next_1.setIcon(icon5)
         self.Next_1.setObjectName("Next_1")
         self.horizontalLayout_21.addWidget(self.Next_1)
-        self.formLayout_5.setLayout(6, QtWidgets.QFormLayout.FieldRole, self.horizontalLayout_21)
-        self.Preview_camera = QtWidgets.QLabel(self.groupBox)
-        self.Preview_camera.setGeometry(QtCore.QRect(10, 10, 770, 320))
-        self.Preview_camera.setStyleSheet("color:white;")
-        self.Preview_camera.setAlignment(QtCore.Qt.AlignCenter)
-        self.Preview_camera.setObjectName("Preview_camera")
+        self.formLayout_7.setLayout(2, QtWidgets.QFormLayout.FieldRole, self.horizontalLayout_21)
+        self.Preview_camera_2 = QtWidgets.QLabel(self.groupBox)
+        self.Preview_camera_2.setGeometry(QtCore.QRect(410, 10, 360, 320))
+        self.Preview_camera_2.setStyleSheet("color:white;")
+        self.Preview_camera_2.setAlignment(QtCore.Qt.AlignCenter)
+        self.Preview_camera_2.setObjectName("Preview_camera_2")
         self.stackedWidget.addWidget(self.Local_Map)
         self.Tutorial = QtWidgets.QWidget()
         self.Tutorial.setObjectName("Tutorial")
@@ -885,7 +918,7 @@ class Ui_MainWindow(object):
 "}")
         self.Tutorial_graph.setObjectName("Tutorial_graph")
         self.groupBox_13 = QtWidgets.QGroupBox(self.frame_6)
-        self.groupBox_13.setGeometry(QtCore.QRect(10, 560, 221, 51))
+        self.groupBox_13.setGeometry(QtCore.QRect(10, 540, 221, 51))
         self.groupBox_13.setStyleSheet("QGroupBox{\n"
 "    border:1px solid rgb(51,51,51);    \n"
 "    border-radius:4px;\n"
@@ -1241,14 +1274,19 @@ class Ui_MainWindow(object):
 "de Salida"))
         self.label_34.setText(_translate("MainWindow", "Profundidad (m):"))
         self.label_49.setText(_translate("MainWindow", "Ángulo (Alpha)"))
-        self.label_50.setText(_translate("MainWindow", "Ángulo (Theta)"))
         self.label_51.setText(_translate("MainWindow", "Clickear en el frame en la parte\n"
 "superior antes de presionar el botón"))
         self.Depth_Angle_play.setText(_translate("MainWindow", "Reproducir\n"
 "prueba"))
+        self.Preview_camera.setText(_translate("MainWindow", "Imagen Cámara Izquierda"))
+        self.groupBox_11.setTitle(_translate("MainWindow", "Prueba de Inferencia del modelo"))
+        self.Depth_Angle_play_2.setText(_translate("MainWindow", "Reproducir\n"
+"prueba"))
+        self.label_55.setText(_translate("MainWindow", "Presiona el botón\n"
+"para probar el modelo de detección"))
         self.Back_1.setText(_translate("MainWindow", "Anterior"))
         self.Next_1.setText(_translate("MainWindow", "Siguiente"))
-        self.Preview_camera.setText(_translate("MainWindow", "Imagen Cámara Izquierda"))
+        self.Preview_camera_2.setText(_translate("MainWindow", "Imagen Cámara Izquierda"))
         self.Tutorial_graph.setTitle(_translate("MainWindow", "Tutorial de uso de hardware en modo de usuario con discapacidad visual "))
         self.groupBox_13.setTitle(_translate("MainWindow", "Menú de navegación de tutorial"))
         self.Tuto_Back.setText(_translate("MainWindow", "Anterior"))

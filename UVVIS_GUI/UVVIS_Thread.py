@@ -255,11 +255,11 @@ class ShowPreviewMap(QThread):
             if self.path!="" and self.activateRectification==True:
                 if config.ViewActivate==True:
                     Image = cv2.cvtColor(left_rect, cv2.COLOR_BGR2RGB)
-                    scale_x = int(config.x*(Image.shape[1]/770))
+                    scale_x = int(config.x*(Image.shape[1]/360))
                     scale_y = int(config.y*(Image.shape[0]/320))
                     Image = cv2.circle(Image, (scale_x,scale_y), 1, (0,255,255), 3)
                     convertToQtformat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888)   
-                    Pic = convertToQtformat.scaled(770, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                     self.ImageUpdate.emit(Pic)
             else:
                 print(str(self.activateRectification))                    

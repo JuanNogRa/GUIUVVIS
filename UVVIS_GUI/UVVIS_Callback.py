@@ -27,17 +27,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.Back_2.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         
         self.Preview.clicked.connect(lambda: self.ActivateCamera())
-        self.pushButton_3.setEnabled(False)
         self.pushButton_3.clicked.connect(lambda: self.Next_Config())
         self.Back_1.clicked.connect(lambda: self.Activate1())
         self.pushButton_2.clicked.connect(lambda: self.open_dialog_box())
         self.Rectification_2.clicked.connect(lambda: self.RectificactionCamera())
         self.Disparity_Map_Bt.clicked.connect(lambda: self.showmapadisparidad())
+        self.Depth_Angle_play.clicked.connect(lambda: self.Distance_SoundPrueba())
         self.ShowImageOnInterface = ShowImageOnInterface(" ", False)
         self.ShowPreviewMap = ShowPreviewMap(" ", False)
         self.ShowDepthMap = ShowDepthMap()
         self.Preview_camera.mousePressEvent = self.CalculateDepth
-        
+
     def CalculateDepth(self, event):
         config.x = event.pos().x()
         config.y = event.pos().y()   
@@ -64,10 +64,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def RectificactionCamera(self):
         self.ActivateRectification=True
         self.ShowImageOnInterface = ShowImageOnInterface(self.path,self.ActivateRectification)
+        self.Disparity_Map_Bt.setEnabled(True)
         if self.ShowImageOnInterface.isFinished:
             self.ShowImageOnInterface.start()       
             self.ShowImageOnInterface.ImageUpdate.connect(self.ImageUpdateSlot)
-            self.ShowImageOnInterface.ImageUpdate1.connect(self.ImageUpdateSlot1)   
+            self.ShowImageOnInterface.ImageUpdate1.connect(self.ImageUpdateSlot1)
+
     
     def showmapadisparidad(self):
         if self.ShowDepthMap.isFinished:
@@ -96,6 +98,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     
     def Activate1(self):
         config.ViewActivate=False
+    
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     window = MainWindow()
