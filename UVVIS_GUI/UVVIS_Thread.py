@@ -61,7 +61,7 @@ class ShowImageOnInterface(QThread):
                 else:
                     Image = cv2.cvtColor(left_right_image[0], cv2.COLOR_BGR2RGB)
                     Image1 = cv2.cvtColor(left_right_image[1], cv2.COLOR_BGR2RGB)
-                if config.ViewActivate==False:
+                if config.ViewActivate==0:
                     convertToQtformat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888)   
                     convertToQtformat1 = QImage(Image1.data, Image1.shape[1], Image1.shape[0], QImage.Format_RGB888)
                     Pic = convertToQtformat.scaled(250, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -69,8 +69,6 @@ class ShowImageOnInterface(QThread):
                     self.ImageUpdate.emit(Pic)
                     self.ImageUpdate1.emit(Pic1)
             mutex.unlock()
-    def ImageUpdateSlot (self, PicDepth):
-        self.DepthImage.emit(PicDepth)
                 
     def stop(self):
         self.ThreadActive = False
@@ -160,13 +158,14 @@ class ShowImageOnInterface(QThread):
     
         cameraMatrix_left = P1
         cameraMatrix_right = P2
-    
+
+        self.Disparity=[left_cam_fx, left_cam_fy, T_[0], left_cam_cx/360, left_cam_cy/320]
         return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y
 
 class ShowDepthMap(QThread):
     global left_rect, right_rect, scale_x, scale_y
     ImageUpdate = pyqtSignal(QImage)
-    
+    disparityLog = pyqtSignal(list)
     def __init__(self):
         QThread.__init__(self)
         
@@ -226,12 +225,15 @@ class ShowDepthMap(QThread):
             _, disparity = cv2.threshold(disparity,0, max_disparity * 16, cv2.THRESH_TOZERO)
             disparity_scaled = (disparity / 16.).astype(np.uint8) 
             Image = cv2.applyColorMap((disparity_scaled * (256. / max_disparity)).astype(np.uint8), cv2.COLORMAP_HOT)
-            Disparity = disparity_scaled[scale_y, scale_x]
+            self.Disparity.append(disparity_scaled[scale_y, scale_x])
+            self.Disparity.append([scale_y, scale_x])
             #Image = cv2.cvtColor(disparity_scaled, cv2.COLOR_GRAY2BGR)            
-            if config.ViewActivate==False:
+            if config.ViewActivate==0:
                 ConvertToQtFormat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888) 
                 PicDepth = ConvertToQtFormat.scaled(250, 200, Qt.KeepAspectRatio)
                 self.ImageUpdate.emit(PicDepth)
+            elif config.ViewActivate==1:
+                self.disparityLog.emit(self.Disparity)
             mutex.unlock()
             
     def stop(self):
@@ -253,7 +255,7 @@ class ShowPreviewMap(QThread):
         while self.ThreadActive:
             mutex.lock()
             if self.path!="" and self.activateRectification==True:
-                if config.ViewActivate==True:
+                if config.ViewActivate==1:
                     Image = cv2.cvtColor(left_rect, cv2.COLOR_BGR2RGB)
                     scale_x = int(config.x*(Image.shape[1]/360))
                     scale_y = int(config.y*(Image.shape[0]/320))
@@ -264,10 +266,9 @@ class ShowPreviewMap(QThread):
             else:
                 print(str(self.activateRectification))                    
             mutex.unlock()
-
-    def ImageUpdateSlot (self, PicDepth):
-        self.DepthImage.emit(PicDepth)
                 
     def stop(self):
         self.ThreadActive = False
         self.quit()
+
+    
