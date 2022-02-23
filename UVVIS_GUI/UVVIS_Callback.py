@@ -8,7 +8,6 @@ from PyQt5.QtGui import QPixmap, QColor
 from PyQt5.QtWidgets import QFileDialog
 from UVVIS_Thread import *
 from UVVIS_GUI import *
-from UVVIS_SUI import *
 import config
 from gtts import gTTS
 import pygame
@@ -43,7 +42,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ShowPreviewMap = ShowPreviewMap(" ", False)
         self.ShowDepthMap = ShowDepthMap()
         self.Preview_camera.mousePressEvent = self.CalculateDepth
-        self.textTovoice = textTovoice()
         
     def CalculateDepth(self, event):
         config.x = event.pos().x()
@@ -108,9 +106,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     
     def disparityList(self, Disparity_list):
         self.DisparityList=Disparity_list
-    
+
+    def Distance_SoundPrueba(self):
+        
+        
+        gtts=gTTS (text = "Prueba Texto ", lang='es', slow=False)
+        self.textTovoice(gtts)
+
     def textTovoice(self,tts) :
-    # convert to file-like object
+        # convert to file-like object
             fp = BytesIO()
             tts.write_to_fp(fp)
             fp.seek(0)
@@ -122,20 +126,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             pygame.mixer.music.play()
             while pygame.mixer.music.get_busy():
                 pygame.time.Clock().tick(10)
-
-    def Distance_SoundPrueba(self):
-        if (self.DisparityList[1][0] > 0):
-            depth = self.DisparityList[0][0] * (self.DisparityList[0][2] / self.DisparityList[1][0])
-            changeInX = self.DisparityList[0][3] - self.DisparityList[2][0]
-            changeInY = self.DisparityList[0][4] - self.DisparityList[2][1]
-            theta_angle= np.degrees(math.atan2(changeInY,changeInX))
-        else:
-            depth = 0
-            theta_angle=0
-        
-        gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
-        self.textTovoice(tts=gtts)
-
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     window = MainWindow()

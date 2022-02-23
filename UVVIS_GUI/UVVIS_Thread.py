@@ -15,7 +15,7 @@ right_rect=np.zeros((1,1,1), np.uint8)
 scale_x=0
 scale_y=0
 mutex = QMutex()
-
+Disparity=[]
 class Resolution :
     width = 1280
     height = 720
@@ -75,7 +75,7 @@ class ShowImageOnInterface(QThread):
         self.quit()
         
     def init_calibration(self, calibration_file, image_size) :
-
+        global Disparity
         cameraMarix_left = cameraMatrix_right = map_left_y = map_left_x = map_right_y = map_right_x = np.array([])
     
         config = configparser.ConfigParser()
@@ -159,11 +159,11 @@ class ShowImageOnInterface(QThread):
         cameraMatrix_left = P1
         cameraMatrix_right = P2
 
-        self.Disparity=[left_cam_fx, left_cam_fy, T_[0], left_cam_cx/360, left_cam_cy/320]
+        Disparity=[left_cam_fx, left_cam_fy, T_[0], left_cam_cx/360, left_cam_cy/320]
         return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y
 
 class ShowDepthMap(QThread):
-    global left_rect, right_rect, scale_x, scale_y
+    global left_rect, right_rect, scale_x, scale_y, Disparity
     ImageUpdate = pyqtSignal(QImage)
     disparityLog = pyqtSignal(list)
     def __init__(self):
@@ -225,14 +225,14 @@ class ShowDepthMap(QThread):
             _, disparity = cv2.threshold(disparity,0, max_disparity * 16, cv2.THRESH_TOZERO)
             disparity_scaled = (disparity / 16.).astype(np.uint8) 
             Image = cv2.applyColorMap((disparity_scaled * (256. / max_disparity)).astype(np.uint8), cv2.COLORMAP_HOT)
-            self.Disparity.append(disparity_scaled[scale_y, scale_x])
-            self.Disparity.append([scale_y, scale_x])
             #Image = cv2.cvtColor(disparity_scaled, cv2.COLOR_GRAY2BGR)            
             if config.ViewActivate==0:
                 ConvertToQtFormat = QImage(Image.data, Image.shape[1], Image.shape[0], QImage.Format_RGB888) 
                 PicDepth = ConvertToQtFormat.scaled(250, 200, Qt.KeepAspectRatio)
                 self.ImageUpdate.emit(PicDepth)
-            elif config.ViewActivate==1:
+            elif config.ViewActivate==2:
+                Disparity.append(disparity_scaled[scale_y, scale_x])
+                Disparity.append([scale_y, scale_x])
                 self.disparityLog.emit(self.Disparity)
             mutex.unlock()
             
