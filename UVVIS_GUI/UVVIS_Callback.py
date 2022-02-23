@@ -79,7 +79,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.ShowDepthMap.isFinished:
             self.ShowDepthMap.start()
             self.ShowDepthMap.ImageUpdate.connect(self.ImageUpdateSlotDepth)
-            self.ShowDepthMap.disparityLog.connect(self.disparityList)
             self.pushButton_3.setEnabled(True)
                 
     def ImageUpdateSlot(self, Image):
@@ -105,13 +104,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         config.ViewActivate=0
     
     def disparityList(self, Disparity_list):
-        self.DisparityList=Disparity_list
+        print(Disparity_list)
+        if (Disparity_list[5] > 0):
+            depth = Disparity_list[0] * (-Disparity_list[2] / Disparity_list[5])
+            changeInX = Disparity_list[3] - Disparity_list[6][0]
+            changeInY = Disparity_list[4] - Disparity_list[6][1]
+            theta_angle= np.degrees(math.atan2(changeInY,changeInX))
+        else:
+            depth = 0
+            theta_angle=0
+        
+        gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
+        self.textTovoice(gtts)
+        config.ViewActivate=1
 
     def Distance_SoundPrueba(self):
+        config.ViewActivate=2
+        self.ShowDepthMap.disparityLog.connect(self.disparityList)
         
-        
-        gtts=gTTS (text = "Prueba Texto ", lang='es', slow=False)
-        self.textTovoice(gtts)
 
     def textTovoice(self,tts) :
         # convert to file-like object
@@ -122,7 +132,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             pygame.init()
             pygame.mixer.init()
             pygame.mixer.music.load(fp)
-            pygame.mixer.music.set_volume(self.dialAudioLevel.value())
             pygame.mixer.music.play()
             while pygame.mixer.music.get_busy():
                 pygame.time.Clock().tick(10)

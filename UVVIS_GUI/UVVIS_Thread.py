@@ -233,7 +233,7 @@ class ShowDepthMap(QThread):
             elif config.ViewActivate==2:
                 Disparity.append(disparity_scaled[scale_y, scale_x])
                 Disparity.append([scale_y, scale_x])
-                self.disparityLog.emit(self.Disparity)
+                self.disparityLog.emit(Disparity)
             mutex.unlock()
             
     def stop(self):
