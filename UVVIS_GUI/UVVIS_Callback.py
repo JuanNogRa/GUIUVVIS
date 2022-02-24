@@ -116,7 +116,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         print("Profundidad " + '{0:.2f}'.format(depth / 1000) + " m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)))
         gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
         #self.textTovoice(gtts)
-        config.ViewActivate=1
+        if config.ViewActivate!=3:
+            config.ViewActivate=1
 
     def Distance_SoundPrueba(self):
         config.ViewActivate=2
