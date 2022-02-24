@@ -163,7 +163,7 @@ def main() :
         exit(1)
 
     # Open the ZED camera
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1,cv2.CAP_MSMF)
     if cap.isOpened() == 0:
         exit(-1)
 

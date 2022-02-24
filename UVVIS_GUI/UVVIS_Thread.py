@@ -160,6 +160,8 @@ class ShowImageOnInterface(QThread):
         cameraMatrix_right = P2
 
         Disparity=[left_cam_fx, left_cam_fy, T_[0], left_cam_cx/360, left_cam_cy/320]
+        Disparity.append([0,0])
+        Disparity.append([0,0])
         return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y
 
 class ShowDepthMap(QThread):
@@ -231,8 +233,8 @@ class ShowDepthMap(QThread):
                 PicDepth = ConvertToQtFormat.scaled(250, 200, Qt.KeepAspectRatio)
                 self.ImageUpdate.emit(PicDepth)
             elif config.ViewActivate==2:
-                Disparity.append(disparity_scaled[scale_y, scale_x])
-                Disparity.append([scale_y, scale_x])
+                Disparity[5]=(disparity_scaled[scale_y, scale_x])
+                Disparity[6]=([scale_y, scale_x])
                 self.disparityLog.emit(Disparity)
             mutex.unlock()
             

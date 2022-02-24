@@ -106,16 +106,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def disparityList(self, Disparity_list):
         print(Disparity_list)
         if (Disparity_list[5] > 0):
-            depth = Disparity_list[0] * (-Disparity_list[2] / Disparity_list[5])
+            depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
             changeInX = Disparity_list[3] - Disparity_list[6][0]
             changeInY = Disparity_list[4] - Disparity_list[6][1]
             theta_angle= np.degrees(math.atan2(changeInY,changeInX))
         else:
             depth = 0
             theta_angle=0
-        
+        print("Profundidad " + '{0:.2f}'.format(depth / 1000) + " m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)))
         gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
-        self.textTovoice(gtts)
+        #self.textTovoice(gtts)
         config.ViewActivate=1
 
     def Distance_SoundPrueba(self):
