@@ -160,7 +160,7 @@ class ShowImageOnInterface(QThread):
         cameraMatrix_left = P1
         cameraMatrix_right = P2
 
-        Disparity=[left_cam_fx, left_cam_fy, T_[0], left_cam_cx/360, left_cam_cy/320]
+        Disparity=[left_cam_fx, left_cam_fy, T_[0], left_cam_cx, left_cam_cy]
         Disparity.append([0,0])
         Disparity.append([0,0])
         return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y
@@ -235,7 +235,7 @@ class ShowDepthMap(QThread):
                 self.ImageUpdate.emit(PicDepth)
             elif config.ViewActivate==2:
                 Disparity[5]=(disparity_scaled[scale_y, scale_x])
-                Disparity[6]=([scale_y, scale_x])
+                Disparity[6]=([scale_x, scale_y])
                 self.disparityLog.emit(Disparity)
             mutex.unlock()
             
@@ -286,12 +286,14 @@ class ShowInferenceModel(QThread):
 
     def run(self):
         self.ThreadActive = True
-        model = torch.hub.load('ultralytics/yolov5', 'custom', path='bestPack2.pt', source='local')  # local repo
+        model = torch.hub.load('C:/Users/juano/Documents/GitHub/yolov5', 'custom', path='bestPack2.pt', source='local', device='cpu')  # local repo
         while self.ThreadActive:
             results = model(left_rect, size=320)
             if config.ViewActivate==3:
                 bounding_box_draw=self.plot_boxes(results, left_rect)
-                self.ImageUpdate.emit(bounding_box_draw)
+                convertToQtformat = QImage(bounding_box_draw.data, bounding_box_draw.shape[1], bounding_box_draw.shape[0], QImage.Format_RGB888)   
+                Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                self.ImageUpdate.emit(Pic)
             labels = results.xyxyn[0][:, -1].numpy()
             cord = results.xyxyn[0][:, :-1].numpy()
             self.ObjectsDetect.emit([labels, cord])

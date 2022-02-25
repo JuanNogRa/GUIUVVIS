@@ -38,9 +38,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.Rectification_2.clicked.connect(lambda: self.RectificactionCamera())
         self.Disparity_Map_Bt.clicked.connect(lambda: self.showmapadisparidad())
         self.Depth_Angle_play.clicked.connect(lambda: self.Distance_SoundPrueba())
+        self.Depth_Angle_play_2.clicked.connect(lambda: self.Inference_PreviewPrueba())
         self.ShowImageOnInterface = ShowImageOnInterface(" ", False)
         self.ShowPreviewMap = ShowPreviewMap(" ", False)
         self.ShowDepthMap = ShowDepthMap()
+        self.ShowInferenceModel = ShowInferenceModel(" ", False)
         self.Preview_camera.mousePressEvent = self.CalculateDepth
         
     def CalculateDepth(self, event):
@@ -104,7 +106,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         config.ViewActivate=0
     
     def disparityList(self, Disparity_list):
-        print(Disparity_list)
+        
         if (Disparity_list[5] > 0):
             depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
             changeInX = Disparity_list[3] - Disparity_list[6][0]
@@ -113,7 +115,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             depth = 0
             theta_angle=0
-        print("Profundidad " + '{0:.2f}'.format(depth / 1000) + " m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)))
+        self.depth_meter.setText('{0:.2f}'.format(depth / 1000) + "m")
+        self.Angle_Alpha.setText('{0:1d}'.format(int(theta_angle)))
         gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
         #self.textTovoice(gtts)
         if config.ViewActivate!=3:
@@ -123,6 +126,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         config.ViewActivate=2
         self.ShowDepthMap.disparityLog.connect(self.disparityList)
         
+    def Inference_PreviewPrueba(self):
+        self.ShowInferenceModel = ShowInferenceModel(self.path,self.ActivateRectification)
+        if self.ShowInferenceModel.isFinished:
+            config.ViewActivate=3
+            self.ShowInferenceModel.start()
+            self.ShowInferenceModel.ObjectsDetect.connect(self.Updateinference)
+    
+    def Updateinference(self, Image):
+        print(Image)
+        #self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
 
     def textTovoice(self,tts) :
         # convert to file-like object
