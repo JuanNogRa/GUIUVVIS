@@ -601,99 +601,6 @@ QPushButton:pressed {
            </widget>
           </item>
           <item>
-           <widget class="QFrame" name="frame_android">
-            <property name="minimumSize">
-             <size>
-              <width>80</width>
-              <height>55</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>160</width>
-              <height>55</height>
-             </size>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Plain</enum>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_18">
-             <property name="spacing">
-              <number>0</number>
-             </property>
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QPushButton" name="bn_bug">
-               <property name="minimumSize">
-                <size>
-                 <width>80</width>
-                 <height>55</height>
-                </size>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>160</width>
-                 <height>55</height>
-                </size>
-               </property>
-               <property name="font">
-                <font>
-                 <family>Segoe UI</family>
-                 <pointsize>9</pointsize>
-                </font>
-               </property>
-               <property name="toolTip">
-                <string>Bug</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">QPushButton {
-	color:white;
-	border: none;
-	background-color: rgba(0,0,0,0);
-}
-QPushButton:hover {
-	background-color: rgb(91,90,90);
-}
-QPushButton:pressed {	
-	background-color: rgba(0,0,0,0);
-}</string>
-               </property>
-               <property name="text">
-                <string/>
-               </property>
-               <property name="icon">
-                <iconset>
-                 <normaloff>Images/bugAsset 47.png</normaloff>Images/bugAsset 47.png</iconset>
-               </property>
-               <property name="iconSize">
-                <size>
-                 <width>22</width>
-                 <height>22</height>
-                </size>
-               </property>
-               <property name="flat">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
            <layout class="QVBoxLayout" name="verticalLayout_4"/>
           </item>
          </layout>
@@ -840,8 +747,8 @@ UVVIS</string>
                      </property>
                      <property name="text">
                       <string>El sistema se encuentra en el modo de usuario supervisor por tanto la herramienta presenta opciones
-para que el usuario pueda acceder al mapa local, los registros de objetos reconocidos, errores del
-sistema y configurar la herramienta para operar el modo de usuario con impedimento visual a través
+para que el usuario pueda acceder al mapa local, cargar el modelo detección de objetos
+y configurar la herramienta para operar el modo de usuario con discapacidad visual a través
 todo a través de esta interfaz gráfica de usuario.</string>
                      </property>
                      <property name="alignment">
@@ -955,9 +862,9 @@ todo a través de esta interfaz gráfica de usuario.</string>
                   <property name="geometry">
                    <rect>
                     <x>10</x>
-                    <y>270</y>
+                    <y>280</y>
                     <width>761</width>
-                    <height>321</height>
+                    <height>311</height>
                    </rect>
                   </property>
                   <layout class="QHBoxLayout" name="horizontalLayout_20">
@@ -1354,7 +1261,7 @@ todo a través de esta interfaz gráfica de usuario.</string>
                         <x>10</x>
                         <y>20</y>
                         <width>231</width>
-                        <height>211</height>
+                        <height>201</height>
                        </rect>
                       </property>
                       <layout class="QFormLayout" name="formLayout_3">
@@ -1472,9 +1379,9 @@ todo a través de esta interfaz gráfica de usuario.</string>
                       <property name="geometry">
                        <rect>
                         <x>10</x>
-                        <y>230</y>
+                        <y>220</y>
                         <width>231</width>
-                        <height>86</height>
+                        <height>81</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -1877,7 +1784,7 @@ prueba</string>
                     <string notr="true">color:white;</string>
                    </property>
                    <property name="text">
-                    <string>Imagen Cámara Izquierda</string>
+                    <string>Imagen Cámara Izquierda Prueba de Orientación</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>
@@ -1887,9 +1794,9 @@ prueba</string>
                    <property name="geometry">
                     <rect>
                      <x>410</x>
-                     <y>330</y>
+                     <y>440</y>
                      <width>361</width>
-                     <height>241</height>
+                     <height>131</height>
                     </rect>
                    </property>
                    <property name="title">
@@ -1901,11 +1808,11 @@ prueba</string>
                       <x>10</x>
                       <y>20</y>
                       <width>341</width>
-                      <height>201</height>
+                      <height>100</height>
                      </rect>
                     </property>
                     <layout class="QFormLayout" name="formLayout_7">
-                     <item row="1" column="1">
+                     <item row="3" column="1">
                       <widget class="QPushButton" name="Depth_Angle_play_2">
                        <property name="styleSheet">
                         <string notr="true">QPushButton {
@@ -1931,7 +1838,7 @@ prueba</string>
                        </property>
                       </widget>
                      </item>
-                     <item row="1" column="0">
+                     <item row="3" column="0">
                       <widget class="QLabel" name="label_55">
                        <property name="styleSheet">
                         <string notr="true">color:white;</string>
@@ -1942,7 +1849,7 @@ para probar el modelo de detección</string>
                        </property>
                       </widget>
                      </item>
-                     <item row="2" column="1">
+                     <item row="4" column="1">
                       <layout class="QHBoxLayout" name="horizontalLayout_21">
                        <item>
                         <widget class="QPushButton" name="Back_1">
@@ -1989,7 +1896,7 @@ QPushButton:pressed {
 }</string>
                          </property>
                          <property name="text">
-                          <string>Siguiente</string>
+                          <string>Empezar</string>
                          </property>
                          <property name="icon">
                           <iconset>
@@ -1998,6 +1905,46 @@ QPushButton:pressed {
                         </widget>
                        </item>
                       </layout>
+                     </item>
+                     <item row="1" column="0">
+                      <widget class="QLabel" name="label_50">
+                       <property name="styleSheet">
+                        <string notr="true">color:white;</string>
+                       </property>
+                       <property name="text">
+                        <string>Clases:</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="1" column="1">
+                      <widget class="QLabel" name="class_label">
+                       <property name="styleSheet">
+                        <string notr="true">color:white;</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="0">
+                      <widget class="QLabel" name="label_52">
+                       <property name="styleSheet">
+                        <string notr="true">color:white;</string>
+                       </property>
+                       <property name="text">
+                        <string>Confianza Scores:</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="2" column="1">
+                      <widget class="QLabel" name="score">
+                       <property name="styleSheet">
+                        <string notr="true">color:white;</string>
+                       </property>
+                       <property name="text">
+                        <string/>
+                       </property>
+                      </widget>
                      </item>
                     </layout>
                    </widget>
@@ -2015,7 +1962,7 @@ QPushButton:pressed {
                     <string notr="true">color:white;</string>
                    </property>
                    <property name="text">
-                    <string>Imagen Cámara Izquierda</string>
+                    <string>Imagen Cámara Izquierda Prueba de Inferencia del Modelo</string>
                    </property>
                    <property name="alignment">
                     <set>Qt::AlignCenter</set>

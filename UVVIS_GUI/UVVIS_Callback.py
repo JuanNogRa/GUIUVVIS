@@ -10,7 +10,8 @@ from UVVIS_Thread import *
 from UVVIS_GUI import *
 import config
 from gtts import gTTS
-import pygame
+from pydub import AudioSegment
+from pydub.playback import play
 from io import BytesIO
 import math
 
@@ -23,7 +24,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.bn_home.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.bn_VIPerson.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
         self.bn_logItemRegister.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
-        self.bn_bug.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(6))
+        #self.bn_bug.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(6))
         #Callbacks button into VIPerson configuration GUI
         self.pushButton_3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
         self.Next_1.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(3))
@@ -42,7 +43,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ShowImageOnInterface = ShowImageOnInterface(" ", False)
         self.ShowPreviewMap = ShowPreviewMap(" ", False)
         self.ShowDepthMap = ShowDepthMap()
-        self.ShowInferenceModel = ShowInferenceModel(" ", False)
         self.Preview_camera.mousePressEvent = self.CalculateDepth
         
     def CalculateDepth(self, event):
@@ -118,7 +118,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.depth_meter.setText('{0:.2f}'.format(depth / 1000) + "m")
         self.Angle_Alpha.setText('{0:1d}'.format(int(theta_angle)))
         gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
-        #self.textTovoice(gtts)
+        self.textTovoice(gtts)
         if config.ViewActivate!=3:
             config.ViewActivate=1
 
@@ -131,24 +131,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.ShowInferenceModel.isFinished:
             config.ViewActivate=3
             self.ShowInferenceModel.start()
-            self.ShowInferenceModel.ObjectsDetect.connect(self.Updateinference)
+            self.ShowInferenceModel.ImageUpdate.connect(self.Updateinference)
     
     def Updateinference(self, Image):
-        print(Image)
-        #self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
+        self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
 
     def textTovoice(self,tts) :
         # convert to file-like object
-            fp = BytesIO()
-            tts.write_to_fp(fp)
-            fp.seek(0)
+        fp = BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
             #--- play it ---
-            pygame.init()
-            pygame.mixer.init()
-            pygame.mixer.music.load(fp)
-            pygame.mixer.music.play()
-            while pygame.mixer.music.get_busy():
-                pygame.time.Clock().tick(10)
+        song = AudioSegment.from_mp3(fp)
+        play(song)
+
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
     window = MainWindow()

@@ -11,6 +11,8 @@ import configparser
 import cv2
 import config
 import torch
+from time import time
+
 left_rect=np.zeros((1,1,1), np.uint8) 
 right_rect=np.zeros((1,1,1), np.uint8)
 scale_x=0
@@ -279,51 +281,79 @@ class ShowInferenceModel(QThread):
     ImageUpdate = pyqtSignal(QImage)
     ObjectsDetect = pyqtSignal(list)
     def __init__(self, path, activateRectification):
+        """
+        Initializes the class with youtube url and output file.
+        """
         QThread.__init__(self)
         self.path = path
         self.activateRectification=activateRectification
-        
+        self.model = self.load_model()
+        self.classes = self.model.names
+        print()
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     def run(self):
         self.ThreadActive = True
-        model = torch.hub.load('C:/Users/juano/Documents/GitHub/yolov5', 'custom', path='bestPack2.pt', source='local', device='cpu')  # local repo
         while self.ThreadActive:
-            results = model(left_rect, size=320)
+            mutex.lock()
             if config.ViewActivate==3:
-                bounding_box_draw=self.plot_boxes(results, left_rect)
-                convertToQtformat = QImage(bounding_box_draw.data, bounding_box_draw.shape[1], bounding_box_draw.shape[0], QImage.Format_RGB888)   
+                start_time = time()
+                frame= cv2.resize(left_rect, (320,320), interpolation= cv2.INTER_LINEAR)
+                results = self.score_frame(frame) # Score the Frame
+                frame=self.plot_boxes(results, frame)
+                end_time = time()
+                fps = 1/np.round(end_time - start_time, 3)
+                print(f"Frames Per Second : {fps}")
+                convertToQtformat = QImage(frame.data, frame.shape[1], frame.shape[0], QImage.Format_RGB888)   
                 Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                 self.ImageUpdate.emit(Pic)
-            labels = results.xyxyn[0][:, -1].numpy()
-            cord = results.xyxyn[0][:, :-1].numpy()
-            self.ObjectsDetect.emit([labels, cord])
             mutex.unlock()
-    
+    def load_model(self):
+        """
+        Loads Yolo5 model from pytorch hub.
+        :return: Trained Pytorch model.
+        """
+        model = torch.hub.load('C:/Users/juano/Documents/GitHub/yolov5', 'custom', path='bestPack2.pt', source='local')  # local repo
+        return model
+
+    def score_frame(self,frame):
+        """
+        Takes a single frame as input, and scores the frame using yolo5 model.
+        :param frame: input frame in numpy/list/tuple format.
+        :return: Labels and Coordinates of objects detected by model in the frame.
+        """
+        self.model.to(self.device)
+        frame = [frame]
+        results = self.model(frame,size=320)
+        labels, cord = results.xyxyn[0][:, -1].numpy(), results.xyxyn[0][:, :-1].numpy()
+        return labels, cord
+
+    def class_to_label(self, x):
+        """
+        For a given label value, return corresponding string label.
+        :param x: numeric label
+        :return: corresponding string label
+        """
+        return self.classes[int(x)]
+
     def plot_boxes(self, results, frame):
-        labels = results.xyxyn[0][:, -1].numpy()
-        cord = results.xyxyn[0][:, :-1].numpy()
+        """
+        Takes a frame and its results as input, and plots the bounding boxes and label on to the frame.
+        :param results: contains labels and coordinates predicted by model on the given frame.
+        :param frame: Frame which has been scored.
+        :return: Frame with bounding boxes and labels ploted on it.
+        """
+        labels, cord = results
         n = len(labels)
         x_shape, y_shape = frame.shape[1], frame.shape[0]
         for i in range(n):
             row = cord[i]
-            # If score is less than 0.2 we avoid making a prediction.
-            if row[4] < 0.2: 
-                continue
-            x1 = int(row[0]*x_shape)
-            y1 = int(row[1]*y_shape)
-            x2 = int(row[2]*x_shape)
-            y2 = int(row[3]*y_shape)
-            bgr = (0, 255, 0) # color of the box
-            classes = self.model.names # Get the name of label index
-            label_font = cv2.FONT_HERSHEY_SIMPLEX #Font for the label.
-            cv2.rectangle(frame, \
-                        (x1, y1), (x2, y2), \
-                        bgr, 2) #Plot the boxes
-            cv2.putText(frame,\
-                        classes[labels[i]], \
-                        (x1, y1), \
-                        label_font, 0.9, bgr, 2) #Put a label over box.
-            return frame
+            if row[4] >= 0.2:
+                x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
+                bgr = (0, 255, 0)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), bgr, 2)
+                cv2.putText(frame, self.class_to_label(labels[i]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.9, bgr, 2)
+        return frame
 
     def stop(self):
         self.ThreadActive = False
