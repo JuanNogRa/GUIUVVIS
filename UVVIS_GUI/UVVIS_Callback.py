@@ -4,14 +4,13 @@ Created on Sun Nov  7 14:47:11 2021
 
 @author: juano
 """
-from PyQt5.QtGui import QPixmap, QColor
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog
 from UVVIS_Thread import *
 from UVVIS_GUI import *
 import config
 from gtts import gTTS
-from pydub import AudioSegment
-from pydub.playback import play
+import pygame
 from io import BytesIO
 import math
 
@@ -142,8 +141,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         tts.write_to_fp(fp)
         fp.seek(0)
             #--- play it ---
-        song = AudioSegment.from_mp3(fp)
-        play(song)
+        pygame.init()
+        pygame.mixer.init()
+        pygame.mixer.music.load(fp)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(10)
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication([])
