@@ -5,7 +5,7 @@ Created on Sun Nov  7 14:47:11 2021
 @author: juano
 """
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from UVVIS_Thread import *
 from UVVIS_GUI import *
 import config
@@ -22,7 +22,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.stackedWidget.setCurrentIndex(0)
         self.bn_home.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(0))
         self.bn_VIPerson.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(1))
-        self.bn_logItemRegister.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(5))
+        self.bn_logItemRegister.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(4))
         #self.bn_bug.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(6))
         #Callbacks button into VIPerson configuration GUI
         self.pushButton_3.clicked.connect(lambda: self.stackedWidget.setCurrentIndex(2))
@@ -39,11 +39,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.Disparity_Map_Bt.clicked.connect(lambda: self.showmapadisparidad())
         self.Depth_Angle_play.clicked.connect(lambda: self.Distance_SoundPrueba())
         self.Depth_Angle_play_2.clicked.connect(lambda: self.Inference_PreviewPrueba())
+        self.Depth_Angle_play_3.clicked.connect(lambda: self.Local_MapLog())
+        self.Accept_2.clicked.connect(lambda: self.ActivateUDV())
         self.ShowImageOnInterface = ShowImageOnInterface(" ", False)
         self.ShowPreviewMap = ShowPreviewMap(" ", False)
         self.ShowDepthMap = ShowDepthMap()
         self.Preview_camera.mousePressEvent = self.CalculateDepth
-        
+        self.Inference=False
+        self.Sound=False
     def CalculateDepth(self, event):
         config.x = event.pos().x()
         config.y = event.pos().y()   
@@ -75,6 +78,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ShowImageOnInterface.start()       
             self.ShowImageOnInterface.ImageUpdate.connect(self.ImageUpdateSlot)
             self.ShowImageOnInterface.ImageUpdate1.connect(self.ImageUpdateSlot1)
+            self.ShowImageOnInterface.ParamsLabels.connect(self.UpdateParam)
     
     def showmapadisparidad(self):
         if self.ShowDepthMap.isFinished:
@@ -87,7 +91,35 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         
     def ImageUpdateSlot1(self, Image):
         self.right_camera.setPixmap(QPixmap.fromImage(Image))
-                
+
+    def UpdateParam(self, Parameter):
+        self.Cx_left_camera.setText(str(Parameter[0][0]))
+        self.Cy_left_camera.setText(str(Parameter[0][1]))
+        self.Fx_left_camera.setText(str(Parameter[0][2]))
+        self.Fy_left_camera.setText(str(Parameter[0][3]))
+        self.K1_left_camera.setText(str(Parameter[0][4]))
+        self.K2_left_camera.setText(str(Parameter[0][5]))
+        self.P1_left_camera.setText(str(Parameter[0][6]))
+        self.P2_left_camera.setText(str(Parameter[0][7]))
+        self.K3_left_camera.setText(str(Parameter[0][8]))
+
+        self.Cx_right_camera.setText(str(Parameter[1][0]))
+        self.Cy_right_camera.setText(str(Parameter[1][1]))
+        self.Fx_right_camera.setText(str(Parameter[1][2]))
+        self.Fy_right_camera.setText(str(Parameter[1][3]))
+        self.K1_right_camera.setText(str(Parameter[1][4]))
+        self.K2_right_camera.setText(str(Parameter[1][5]))
+        self.P1_right_camera.setText(str(Parameter[1][6]))
+        self.P2_right_camera.setText(str(Parameter[1][7]))
+        self.K3_right_camera.setText(str(Parameter[1][8]))
+
+        self.Baseline_depth.setText(str(Parameter[2][0][0]))
+        self.Ty_depth.setText(str(Parameter[2][0][1]))
+        self.Tz_depth.setText(str(Parameter[2][0][2]))
+        self.Rx_depth.setText(str(Parameter[2][1][0]))
+        self.Cv_depth.setText(str(Parameter[2][1][1]))
+        self.Rz_depth.setText(str(Parameter[2][1][2]))
+        
     def ImageUpdateSlotDepth(self, Image):
         self.disparity_map.setPixmap(QPixmap.fromImage(Image))
     
@@ -105,7 +137,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         config.ViewActivate=0
     
     def disparityList(self, Disparity_list):
-        
         if (Disparity_list[5] > 0):
             depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
             changeInX = Disparity_list[3] - Disparity_list[6][0]
@@ -117,15 +148,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.depth_meter.setText('{0:.2f}'.format(depth / 1000) + "m")
         self.Angle_Alpha.setText('{0:1d}'.format(int(theta_angle)))
         gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
-        self.textTovoice(gtts)
+        #self.textTovoice(gtts)
         if config.ViewActivate!=3:
             config.ViewActivate=1
 
     def Distance_SoundPrueba(self):
         config.ViewActivate=2
+        self.Sound=True
+        if(self.Sound & self.Inference):
+            self.Next_1.setEnabled(True)
         self.ShowDepthMap.disparityLog.connect(self.disparityList)
         
     def Inference_PreviewPrueba(self):
+        self.Inference=True
+        if(self.Sound & self.Inference):
+            self.Next_1.setEnabled(True)
         self.ShowInferenceModel = ShowInferenceModel(self.path,self.ActivateRectification)
         if self.ShowInferenceModel.isFinished:
             config.ViewActivate=3
@@ -135,6 +172,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def Updateinference(self, Image):
         self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
 
+    def Local_MapLog(self):
+        if(self.Sound & self.Inference):
+            self.Accept_2.setEnabled(True)
+    
+    def ActivateUDV(self):
+        msgBox = QMessageBox()
+        msgBox.setIcon(QMessageBox.Information)
+        msgBox.setWindowTitle("Confirmación de cambio de modo")
+        msgBox.setText("¿Esta seguro de cambiar al modo de usuario con discapacidad visual?")
+        msgBox.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+
+        returnValue = msgBox.exec()
+        if returnValue == QMessageBox.Ok:
+            print('OK clicked')
+
     def textTovoice(self,tts) :
         # convert to file-like object
         fp = BytesIO()
@@ -143,6 +195,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             #--- play it ---
         pygame.init()
         pygame.mixer.init()
+        pygame.mixer.music.set_volume(self.dialAudioLevel.value())
         pygame.mixer.music.load(fp)
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy():

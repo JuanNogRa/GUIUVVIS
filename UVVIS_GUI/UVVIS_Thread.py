@@ -26,7 +26,7 @@ class Resolution :
 class ShowImageOnInterface(QThread):
     ImageUpdate = pyqtSignal(QImage)
     ImageUpdate1 = pyqtSignal(QImage)
-    
+    ParamsLabels = pyqtSignal(list)
     def __init__(self, path, activateRectification):
         QThread.__init__(self)
         self.path = path
@@ -45,7 +45,8 @@ class ShowImageOnInterface(QThread):
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, image_size.height)
         
         if self.path!="":
-            camera_matrix_left, camera_matrix_right, map_left_x, map_left_y, map_right_x, map_right_y = self.init_calibration(self.path, image_size)
+            camera_matrix_left, camera_matrix_right, map_left_x, map_left_y, map_right_x, map_right_y, left_param, right_param, camera_parameter = self.init_calibration(self.path, image_size)
+            self.ParamsLabels.emit([left_param,right_param,camera_parameter])
         while self.ThreadActive:
             mutex.lock()
             ret, frame = cap.read()
@@ -102,7 +103,6 @@ class ShowImageOnInterface(QThread):
                        float(config['STEREO']['TY_'+resolution_str] if 'TY_'+resolution_str in config['STEREO'] else 0),
                        float(config['STEREO']['TZ_'+resolution_str] if 'TZ_'+resolution_str in config['STEREO'] else 0)])
     
-    
         left_cam_cx = float(config['LEFT_CAM_'+resolution_str]['cx'] if 'cx' in config['LEFT_CAM_'+resolution_str] else 0)
         left_cam_cy = float(config['LEFT_CAM_'+resolution_str]['cy'] if 'cy' in config['LEFT_CAM_'+resolution_str] else 0)
         left_cam_fx = float(config['LEFT_CAM_'+resolution_str]['fx'] if 'fx' in config['LEFT_CAM_'+resolution_str] else 0)
@@ -113,7 +113,8 @@ class ShowImageOnInterface(QThread):
         left_cam_p2 = float(config['LEFT_CAM_'+resolution_str]['p2'] if 'p2' in config['LEFT_CAM_'+resolution_str] else 0)
         left_cam_p3 = float(config['LEFT_CAM_'+resolution_str]['p3'] if 'p3' in config['LEFT_CAM_'+resolution_str] else 0)
         left_cam_k3 = float(config['LEFT_CAM_'+resolution_str]['k3'] if 'k3' in config['LEFT_CAM_'+resolution_str] else 0)
-    
+        left_param = [left_cam_cx, left_cam_cy, left_cam_fx, left_cam_fy, left_cam_k1, left_cam_k2, left_cam_p1, left_cam_p2
+        ,left_cam_p3, left_cam_k3]
     
         right_cam_cx = float(config['RIGHT_CAM_'+resolution_str]['cx'] if 'cx' in config['RIGHT_CAM_'+resolution_str] else 0)
         right_cam_cy = float(config['RIGHT_CAM_'+resolution_str]['cy'] if 'cy' in config['RIGHT_CAM_'+resolution_str] else 0)
@@ -125,11 +126,13 @@ class ShowImageOnInterface(QThread):
         right_cam_p2 = float(config['RIGHT_CAM_'+resolution_str]['p2'] if 'p2' in config['RIGHT_CAM_'+resolution_str] else 0)
         right_cam_p3 = float(config['RIGHT_CAM_'+resolution_str]['p3'] if 'p3' in config['RIGHT_CAM_'+resolution_str] else 0)
         right_cam_k3 = float(config['RIGHT_CAM_'+resolution_str]['k3'] if 'k3' in config['RIGHT_CAM_'+resolution_str] else 0)
-    
+        right_param = [right_cam_cx, right_cam_cy, right_cam_fx, right_cam_fy, right_cam_k1, right_cam_k2, right_cam_p1, right_cam_p2
+        ,right_cam_p3, right_cam_k3]
+
         R_zed = np.array([float(config['STEREO']['RX_'+resolution_str] if 'RX_' + resolution_str in config['STEREO'] else 0),
                           float(config['STEREO']['CV_'+resolution_str] if 'CV_' + resolution_str in config['STEREO'] else 0),
                           float(config['STEREO']['RZ_'+resolution_str] if 'RZ_' + resolution_str in config['STEREO'] else 0)])
-    
+        camera_parameter=[T_,R_zed]
         R, _ = cv2.Rodrigues(R_zed)
         cameraMatrix_left = np.array([[left_cam_fx, 0, left_cam_cx],
                              [0, left_cam_fy, left_cam_cy],
@@ -165,7 +168,7 @@ class ShowImageOnInterface(QThread):
         Disparity=[left_cam_fx, left_cam_fy, T_[0], left_cam_cx, left_cam_cy]
         Disparity.append([0,0])
         Disparity.append([0,0])
-        return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y
+        return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y, left_param, right_param, camera_parameter
 
 class ShowDepthMap(QThread):
     global left_rect, right_rect, scale_x, scale_y, Disparity
