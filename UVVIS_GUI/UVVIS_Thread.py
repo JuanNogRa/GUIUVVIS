@@ -242,6 +242,10 @@ class ShowDepthMap(QThread):
                 Disparity[5]=(disparity_scaled[scale_y, scale_x])
                 Disparity[6]=([scale_x, scale_y])
                 self.disparityLog.emit(Disparity)
+            elif config.ViewActivate==4:
+                Disparity[5]=(disparity_scaled[scale_y, scale_x])
+                Disparity[6]=([scale_x, scale_y])
+                self.disparityLog.emit(Disparity)
             mutex.unlock()
             
     def stop(self):
@@ -283,6 +287,7 @@ class ShowPreviewMap(QThread):
 class ShowInferenceModel(QThread):
     ImageUpdate = pyqtSignal(QImage)
     ObjectsDetect = pyqtSignal(list)
+    global scale_x, scale_y
     def __init__(self, path, activateRectification):
         """
         Initializes the class with youtube url and output file.
@@ -351,11 +356,16 @@ class ShowInferenceModel(QThread):
         x_shape, y_shape = frame.shape[1], frame.shape[0]
         for i in range(n):
             row = cord[i]
-            if row[4] >= 0.2:
+            if row[4] >= 0.4:
                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
                 bgr = (0, 255, 0)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), bgr, 2)
                 cv2.putText(frame, self.class_to_label(labels[i]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.9, bgr, 2)
+                medium_Point_x = int((x1 + x2)/2)
+                medium_Point_y = int((y1 + y2)/2)
+                scale_x = int(medium_Point_x.x*(800/360))
+                scale_y = int(medium_Point_y.y*(600/320))
+                self.ObjectsDetect.emit([labels, cord, [scale_x, scale_y]])
         return frame
 
     def stop(self):

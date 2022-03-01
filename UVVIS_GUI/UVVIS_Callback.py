@@ -137,18 +137,28 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         config.ViewActivate=0
     
     def disparityList(self, Disparity_list):
-        if (Disparity_list[5] > 0):
-            depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
-            changeInX = Disparity_list[3] - Disparity_list[6][0]
-            changeInY = Disparity_list[4] - Disparity_list[6][1]
-            theta_angle= np.degrees(math.atan2(changeInY,changeInX))
-        else:
-            depth = 0
-            theta_angle=0
-        self.depth_meter.setText('{0:.2f}'.format(depth / 1000) + "m")
-        self.Angle_Alpha.setText('{0:1d}'.format(int(theta_angle)))
-        gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
-        #self.textTovoice(gtts)
+        if config.ViewActivate==2:
+            if (Disparity_list[5] > 0):
+                depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
+                changeInX = Disparity_list[3] - Disparity_list[6][0]
+                changeInY = Disparity_list[4] - Disparity_list[6][1]
+                theta_angle= np.degrees(math.atan2(changeInY,changeInX))
+            else:
+                depth = 0
+                theta_angle=0
+            self.depth_meter.setText('{0:.2f}'.format(depth / 1000) + "m")
+            self.Angle_Alpha.setText('{0:1d}'.format(int(theta_angle)))
+            gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
+            #self.textTovoice(gtts)
+        elif config.ViewActivate==4:
+            if (Disparity_list[5] > 0):
+                depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
+                changeInX = Disparity_list[3] - self.variableMap[2][0]
+                changeInY = Disparity_list[4] - self.variableMap[2][1]
+                theta_angle= np.degrees(math.atan2(changeInY,changeInX))
+            else:
+                depth = 0
+                theta_angle=0
         if config.ViewActivate!=3:
             config.ViewActivate=1
 
@@ -168,13 +178,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             config.ViewActivate=3
             self.ShowInferenceModel.start()
             self.ShowInferenceModel.ImageUpdate.connect(self.Updateinference)
+            self.ShowInferenceModel.ObjectsDetect.connect(self.UpdateinferenceList)
     
     def Updateinference(self, Image):
         self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
 
+    def UpdateinferenceList(self, ListDetected):
+        self.variableMap=ListDetected
+        self.class_label.setText(ListDetected[0][:])
+        self.score.setText(ListDetected[1][4])
+
     def Local_MapLog(self):
+        config.ViewActivate=4
         if(self.Sound & self.Inference):
             self.Accept_2.setEnabled(True)
+        self.ShowDepthMap.disparityLog.connect(self.disparityList)
     
     def ActivateUDV(self):
         msgBox = QMessageBox()
@@ -195,7 +213,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             #--- play it ---
         pygame.init()
         pygame.mixer.init()
-        pygame.mixer.music.set_volume(self.dialAudioLevel.value())
+        pygame.mixer.music.set_volume(self.dialAudioLevel.value()/100)
         pygame.mixer.music.load(fp)
         pygame.mixer.music.play()
         while pygame.mixer.music.get_busy():
