@@ -4,6 +4,7 @@ Created on Sun Nov  7 14:41:22 2021
 
 @author: juano
 """
+from asyncio.windows_events import NULL
 import numpy as np
 from PyQt5.QtGui import QImage
 from PyQt5.QtCore import pyqtSignal,QThread, Qt, QMutex 
@@ -304,14 +305,10 @@ class ShowInferenceModel(QThread):
         self.ThreadActive = True
         while self.ThreadActive:
             mutex.lock()
+            frame= cv2.resize(left_rect, (320,320), interpolation= cv2.INTER_LINEAR)
+            results = self.score_frame(frame) # Score the Frame
+            frame=self.plot_boxes(results, frame)
             if config.ViewActivate==3:
-                start_time = time()
-                frame= cv2.resize(left_rect, (320,320), interpolation= cv2.INTER_LINEAR)
-                results = self.score_frame(frame) # Score the Frame
-                frame=self.plot_boxes(results, frame)
-                end_time = time()
-                fps = 1/np.round(end_time - start_time, 3)
-                print(f"Frames Per Second : {fps}")
                 convertToQtformat = QImage(frame.data, frame.shape[1], frame.shape[0], QImage.Format_RGB888)   
                 Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
                 self.ImageUpdate.emit(Pic)
@@ -351,6 +348,7 @@ class ShowInferenceModel(QThread):
         :param frame: Frame which has been scored.
         :return: Frame with bounding boxes and labels ploted on it.
         """
+        Emitir=[NULL]
         labels, cord = results
         n = len(labels)
         x_shape, y_shape = frame.shape[1], frame.shape[0]
@@ -358,14 +356,17 @@ class ShowInferenceModel(QThread):
             row = cord[i]
             if row[4] >= 0.4:
                 x1, y1, x2, y2 = int(row[0]*x_shape), int(row[1]*y_shape), int(row[2]*x_shape), int(row[3]*y_shape)
-                bgr = (0, 255, 0)
-                cv2.rectangle(frame, (x1, y1), (x2, y2), bgr, 2)
-                cv2.putText(frame, self.class_to_label(labels[i]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.9, bgr, 2)
-                medium_Point_x = int((x1 + x2)/2)
-                medium_Point_y = int((y1 + y2)/2)
-                scale_x = int(medium_Point_x.x*(800/360))
-                scale_y = int(medium_Point_y.y*(600/320))
-                self.ObjectsDetect.emit([labels, cord, [scale_x, scale_y]])
+                if config.ViewActivate==4:
+                    medium_Point_x = int((x1 + x2)/2)
+                    medium_Point_y = int((y1 + y2)/2)
+                    Emitir=[self.class_to_label(labels[i]), row[4], [medium_Point_x, medium_Point_y]]
+                    print(str(Emitir))
+                elif config.ViewActivate==3:
+                    bgr = (0, 255, 0)
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), bgr, 2)
+                    cv2.putText(frame, self.class_to_label(labels[i]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.9, bgr, 2)
+                    Emitir=[self.class_to_label(labels[i]), row[4], [0, 0]]
+                self.ObjectsDetect.emit(Emitir)  
         return frame
 
     def stop(self):
