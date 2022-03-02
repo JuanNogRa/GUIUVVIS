@@ -8,6 +8,7 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 from UVVIS_Thread import *
 from UVVIS_GUI import *
+import pandas as pd
 import config
 from gtts import gTTS
 import pygame
@@ -151,17 +152,45 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
             #self.textTovoice(gtts)
         elif config.ViewActivate==4:
+            position_commands=''
             if (Disparity_list[5] > 0 and self.variableMap!=NULL):
                 depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
                 changeInX = Disparity_list[3] - self.variableMap[2][0]
                 changeInY = Disparity_list[4] - self.variableMap[2][1]
-                theta_angle= np.degrees(math.atan2(changeInY,changeInX))
+                theta_angle= np.degrees(math.atan2(changeInY,-changeInX))
             else:
                 depth = 0
                 theta_angle=0
+                position_commands='no registra'
+            if theta_angle>=345 and theta_angle<15:
+                position_commands='hacia la derecha'
+            elif theta_angle>=15 and theta_angle<75:
+                position_commands='hacia la diagonal derecha'
+            elif theta_angle>=165 and theta_angle<195:
+                position_commands='la izquierda'
+            elif theta_angle>=105 and theta_angle<165:
+                position_commands='la diagonal izquierda'
+            elif (theta_angle>=75 and theta_angle<105):
+                position_commands='adelante'
+            elif theta_angle>=285 and theta_angle<345:
+                position_commands='la diagonal derecha abajo'
+            elif theta_angle>=195 and theta_angle<255:
+                position_commands='la diagonal izquierda abajo'
+            elif theta_angle>=255 and theta_angle<285:
+                position_commands='adelante abajo'
             print("Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)))
+            self.ObjectReconice_log_2.setText(self.pandas_to_str(self.variableMap[0][:],depth,theta_angle,position_commands))
+            self.ObjectReconice_log_2.showMaximized()
         if config.ViewActivate!=3:
             config.ViewActivate=1
+    
+    def pandas_to_str(self,clase,distancia,orientacion,position_commands):
+        df = pd.DataFrame({ 
+            'Clase' : clase,
+            'Distancia' : distancia,
+            'Orientación' : orientacion,
+            'Posición' : position_commands})
+        return df.to_string(col_space =14,justify = "justify")
 
     def Distance_SoundPrueba(self):
         config.ViewActivate=2

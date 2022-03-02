@@ -359,7 +359,9 @@ class ShowInferenceModel(QThread):
                 if config.ViewActivate==4:
                     medium_Point_x = int((x1 + x2)/2)
                     medium_Point_y = int((y1 + y2)/2)
-                    Emitir=[self.class_to_label(labels[i]), row[4], [medium_Point_x, medium_Point_y]]
+                    scale_x=int(medium_Point_x*(x_shape/320))
+                    scale_y=int(medium_Point_y*(y_shape/320))
+                    Emitir=[self.class_to_label(labels[i]), row[4], [scale_x, scale_y]]
                     print(str(Emitir))
                 elif config.ViewActivate==3:
                     bgr = (0, 255, 0)
