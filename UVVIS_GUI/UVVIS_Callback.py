@@ -48,6 +48,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.Preview_camera.mousePressEvent = self.CalculateDepth
         self.Inference=False
         self.Sound=False
+        self.i=0
+    
     def CalculateDepth(self, event):
         config.x = event.pos().x()
         config.y = event.pos().y()   
@@ -141,9 +143,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if config.ViewActivate==2:
             if (Disparity_list[5] > 0):
                 depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
-                changeInX = Disparity_list[3] - Disparity_list[6][0]
-                changeInY = Disparity_list[4] - Disparity_list[6][1]
-                theta_angle= np.degrees(math.atan2(changeInY,changeInX))
+                changeInX = (Disparity_list[3]/1.6) - Disparity_list[6][0]
+                changeInY = (Disparity_list[4]/1.6) - Disparity_list[6][1]
+                theta_angle= np.degrees(math.atan2(changeInY,-changeInX))
             else:
                 depth = 0
                 theta_angle=0
@@ -155,42 +157,41 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             position_commands=''
             if (Disparity_list[5] > 0 and self.variableMap!=NULL):
                 depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
-                changeInX = Disparity_list[3] - self.variableMap[2][0]
-                changeInY = Disparity_list[4] - self.variableMap[2][1]
+                changeInX = (Disparity_list[3]/1.6)   - Disparity_list[6][0]
+                changeInY = (Disparity_list[4]/1.6) - Disparity_list[6][1]
                 theta_angle= np.degrees(math.atan2(changeInY,-changeInX))
             else:
                 depth = 0
                 theta_angle=0
                 position_commands='no registra'
-            if theta_angle>=345 and theta_angle<15:
+
+            if theta_angle>=-15 and theta_angle<15:
                 position_commands='hacia la derecha'
             elif theta_angle>=15 and theta_angle<75:
                 position_commands='hacia la diagonal derecha'
-            elif theta_angle>=165 and theta_angle<195:
+            elif theta_angle>=165 and theta_angle<-165:
                 position_commands='la izquierda'
             elif theta_angle>=105 and theta_angle<165:
                 position_commands='la diagonal izquierda'
             elif (theta_angle>=75 and theta_angle<105):
                 position_commands='adelante'
-            elif theta_angle>=285 and theta_angle<345:
+            elif theta_angle>=-75 and theta_angle<-15:
                 position_commands='la diagonal derecha abajo'
-            elif theta_angle>=195 and theta_angle<255:
+            elif theta_angle>=-165 and theta_angle<-105:
                 position_commands='la diagonal izquierda abajo'
-            elif theta_angle>=255 and theta_angle<285:
+            elif theta_angle>=-105 and theta_angle<75:
                 position_commands='adelante abajo'
-            print("Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)))
+            self.ObjectReconice_log_2.setStyleSheet('color: white')
+            self.ObjectReconice_log_2.setFont(QtGui.QFont("Monospace"))
             self.ObjectReconice_log_2.setText(self.pandas_to_str(self.variableMap[0][:],depth,theta_angle,position_commands))
             self.ObjectReconice_log_2.showMaximized()
-        if config.ViewActivate!=3:
-            config.ViewActivate=1
-    
     def pandas_to_str(self,clase,distancia,orientacion,position_commands):
         df = pd.DataFrame({ 
-            'Clase' : clase,
-            'Distancia' : distancia,
-            'Orientación' : orientacion,
-            'Posición' : position_commands})
-        return df.to_string(col_space =14,justify = "justify")
+            'Clase' : [clase],
+            'Distancia' : ['{0:.2f}'.format(distancia / 1000)],
+            'Orientación' : ['{0:1d}'.format(int(orientacion))],
+            'Posición' : [position_commands]})
+        return df.to_string(col_space =20,justify = "left")
 
     def Distance_SoundPrueba(self):
         config.ViewActivate=2
@@ -211,7 +212,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ShowInferenceModel.ObjectsDetect.connect(self.UpdateinferenceList)
     
     def Updateinference(self, Image):
-        self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
+        if config.ViewActivate==3:
+            self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
+        elif config.ViewActivate==4:
+            self.Preview_camera_3.setPixmap(QPixmap.fromImage(Image))
 
     def UpdateinferenceList(self, ListDetected):
         self.variableMap=ListDetected
@@ -223,9 +227,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         config.ViewActivate=4
         if(self.Sound & self.Inference):
             self.Accept_2.setEnabled(True)
-        self.ShowInferenceModel.ObjectsDetect.connect(self.UpdateinferenceList)
         self.ShowDepthMap.disparityLog.connect(self.disparityList)
-    
+        self.ShowInferenceModel.ObjectsDetect.connect(self.UpdateinferenceList)
+        self.ShowInferenceModel.ImageUpdate.connect(self.Updateinference)
+
     def ActivateUDV(self):
         msgBox = QMessageBox()
         msgBox.setIcon(QMessageBox.Information)

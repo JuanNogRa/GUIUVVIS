@@ -288,7 +288,6 @@ class ShowPreviewMap(QThread):
 class ShowInferenceModel(QThread):
     ImageUpdate = pyqtSignal(QImage)
     ObjectsDetect = pyqtSignal(list)
-    global scale_x, scale_y
     def __init__(self, path, activateRectification):
         """
         Initializes the class with youtube url and output file.
@@ -303,15 +302,16 @@ class ShowInferenceModel(QThread):
 
     def run(self):
         self.ThreadActive = True
+        global scale_x, scale_y
         while self.ThreadActive:
             mutex.lock()
             frame= cv2.resize(left_rect, (320,320), interpolation= cv2.INTER_LINEAR)
             results = self.score_frame(frame) # Score the Frame
             frame=self.plot_boxes(results, frame)
-            if config.ViewActivate==3:
-                convertToQtformat = QImage(frame.data, frame.shape[1], frame.shape[0], QImage.Format_RGB888)   
-                Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self.ImageUpdate.emit(Pic)
+            
+            convertToQtformat = QImage(frame.data, frame.shape[1], frame.shape[0], QImage.Format_RGB888)   
+            Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.ImageUpdate.emit(Pic)
             mutex.unlock()
     def load_model(self):
         """
@@ -348,6 +348,7 @@ class ShowInferenceModel(QThread):
         :param frame: Frame which has been scored.
         :return: Frame with bounding boxes and labels ploted on it.
         """
+        global scale_x, scale_y
         Emitir=[NULL]
         labels, cord = results
         n = len(labels)
@@ -359,16 +360,18 @@ class ShowInferenceModel(QThread):
                 if config.ViewActivate==4:
                     medium_Point_x = int((x1 + x2)/2)
                     medium_Point_y = int((y1 + y2)/2)
-                    scale_x=int(medium_Point_x*(x_shape/320))
-                    scale_y=int(medium_Point_y*(y_shape/320))
+                    scale_x=int(medium_Point_x*(800/320))
+                    scale_y=int(medium_Point_y*(600/320))
+                    bgr = (0, 255, 0)
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), bgr, 2)
+                    cv2.putText(frame, self.class_to_label(labels[i]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.9, bgr, 2)
                     Emitir=[self.class_to_label(labels[i]), row[4], [scale_x, scale_y]]
-                    print(str(Emitir))
                 elif config.ViewActivate==3:
                     bgr = (0, 255, 0)
                     cv2.rectangle(frame, (x1, y1), (x2, y2), bgr, 2)
                     cv2.putText(frame, self.class_to_label(labels[i]), (x1, y1), cv2.FONT_HERSHEY_SIMPLEX, 0.9, bgr, 2)
                     Emitir=[self.class_to_label(labels[i]), row[4], [0, 0]]
-                self.ObjectsDetect.emit(Emitir)  
+                self.ObjectsDetect.emit(Emitir)
         return frame
 
     def stop(self):

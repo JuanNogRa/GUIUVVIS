@@ -657,7 +657,7 @@ QPushButton:pressed {
              <item>
               <widget class="QStackedWidget" name="stackedWidget">
                <property name="currentIndex">
-                <number>2</number>
+                <number>3</number>
                </property>
                <widget class="QWidget" name="Home_Page">
                 <widget class="QFrame" name="frame_4">
@@ -1333,7 +1333,7 @@ todo a través de esta interfaz gráfica de usuario.</string>
                         <x>10</x>
                         <y>20</y>
                         <width>231</width>
-                        <height>191</height>
+                        <height>209</height>
                        </rect>
                       </property>
                       <layout class="QFormLayout" name="formLayout_3">
@@ -2251,14 +2251,42 @@ Mapa Local</string>
                   <property name="title">
                    <string>Registro de Mapa Local</string>
                   </property>
-                  <widget class="QTextBrowser" name="ObjectReconice_log_2">
+                  <widget class="QLabel" name="ObjectReconice_log_2">
                    <property name="geometry">
                     <rect>
                      <x>10</x>
-                     <y>20</y>
+                     <y>380</y>
                      <width>761</width>
-                     <height>441</height>
+                     <height>71</height>
                     </rect>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">color=rgb(255, 255, 255)</string>
+                   </property>
+                   <property name="text">
+                    <string/>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                   </property>
+                  </widget>
+                  <widget class="QLabel" name="Preview_camera_3">
+                   <property name="geometry">
+                    <rect>
+                     <x>220</x>
+                     <y>30</y>
+                     <width>360</width>
+                     <height>320</height>
+                    </rect>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">color:white;</string>
+                   </property>
+                   <property name="text">
+                    <string>Imagen Cámara Izquierda Prueba de Inferencia del Modelo</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignCenter</set>
                    </property>
                   </widget>
                  </widget>

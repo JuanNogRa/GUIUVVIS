@@ -164,21 +164,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 depth = 0
                 theta_angle=0
                 position_commands='no registra'
-            if theta_angle>=345 and theta_angle<15:
+            if theta_angle>=-15 and theta_angle<15:
                 position_commands='hacia la derecha'
             elif theta_angle>=15 and theta_angle<75:
                 position_commands='hacia la diagonal derecha'
-            elif theta_angle>=165 and theta_angle<195:
+            elif theta_angle>=165 and theta_angle<-165:
                 position_commands='la izquierda'
             elif theta_angle>=105 and theta_angle<165:
                 position_commands='la diagonal izquierda'
             elif (theta_angle>=75 and theta_angle<105):
                 position_commands='adelante'
-            elif theta_angle>=285 and theta_angle<345:
+            elif theta_angle>=-75 and theta_angle<-15:
                 position_commands='la diagonal derecha abajo'
-            elif theta_angle>=195 and theta_angle<255:
+            elif theta_angle>=-165 and theta_angle<-105:
                 position_commands='la diagonal izquierda abajo'
-            elif theta_angle>=255 and theta_angle<285:
+            elif theta_angle>=-105 and theta_angle<75:
                 position_commands='adelante abajo'
             print("Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)))
             self.ObjectReconice_log_2.setText(self.pandas_to_str(self.variableMap[0][:],depth,theta_angle,position_commands))

@@ -540,7 +540,7 @@ class Ui_MainWindow(object):
 "}")
         self.groupBox_8.setObjectName("groupBox_8")
         self.formLayoutWidget_3 = QtWidgets.QWidget(self.groupBox_8)
-        self.formLayoutWidget_3.setGeometry(QtCore.QRect(10, 20, 231, 191))
+        self.formLayoutWidget_3.setGeometry(QtCore.QRect(10, 20, 231, 209))
         self.formLayoutWidget_3.setObjectName("formLayoutWidget_3")
         self.formLayout_3 = QtWidgets.QFormLayout(self.formLayoutWidget_3)
         self.formLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -1018,9 +1018,17 @@ class Ui_MainWindow(object):
 "    background:rgb(91,90,90);\n"
 "}")
         self.groupBox_9.setObjectName("groupBox_9")
-        self.ObjectReconice_log_2 = QtWidgets.QTextBrowser(self.groupBox_9)
-        self.ObjectReconice_log_2.setGeometry(QtCore.QRect(10, 20, 761, 441))
+        self.ObjectReconice_log_2 = QtWidgets.QLabel(self.groupBox_9)
+        self.ObjectReconice_log_2.setGeometry(QtCore.QRect(10, 380, 761, 71))
+        self.ObjectReconice_log_2.setStyleSheet("color=rgb(255, 255, 255)")
+        self.ObjectReconice_log_2.setText("")
+        self.ObjectReconice_log_2.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.ObjectReconice_log_2.setObjectName("ObjectReconice_log_2")
+        self.Preview_camera_3 = QtWidgets.QLabel(self.groupBox_9)
+        self.Preview_camera_3.setGeometry(QtCore.QRect(220, 30, 360, 320))
+        self.Preview_camera_3.setStyleSheet("color:white;")
+        self.Preview_camera_3.setAlignment(QtCore.Qt.AlignCenter)
+        self.Preview_camera_3.setObjectName("Preview_camera_3")
         self.stackedWidget.addWidget(self.LocalMap)
         self.Tutorial = QtWidgets.QWidget()
         self.Tutorial.setObjectName("Tutorial")
@@ -1326,7 +1334,7 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
-        self.stackedWidget.setCurrentIndex(2)
+        self.stackedWidget.setCurrentIndex(3)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -1418,6 +1426,7 @@ class Ui_MainWindow(object):
         self.Depth_Angle_play_3.setText(_translate("MainWindow", "Empezar Registro\n"
 "Mapa Local"))
         self.groupBox_9.setTitle(_translate("MainWindow", "Registro de Mapa Local"))
+        self.Preview_camera_3.setText(_translate("MainWindow", "Imagen Cámara Izquierda Prueba de Inferencia del Modelo"))
         self.Tutorial_graph.setTitle(_translate("MainWindow", "Tutorial de uso de hardware en modo de usuario con discapacidad visual "))
         self.groupBox_13.setTitle(_translate("MainWindow", "Menú de navegación de tutorial"))
         self.Tuto_Back.setText(_translate("MainWindow", "Anterior"))
