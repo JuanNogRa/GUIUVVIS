@@ -128,12 +128,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def ImageUpdatePreview(self, Image):
         self.Preview_camera.setPixmap(QPixmap.fromImage(Image))
     
-    def Next_Config(self): 
-        self.ShowPreviewMap = ShowPreviewMap(self.path,self.ActivateRectification)
+    def Next_Config(self):
+        config.ViewActivate=1
+        self.ShowDepthMap.stop()
+        """self.ShowPreviewMap = ShowPreviewMap(self.path,self.ActivateRectification)
         if self.ShowPreviewMap.isFinished:
             self.ShowPreviewMap.start()
             config.ViewActivate=1
-            self.ShowPreviewMap.ImageUpdate.connect(self.ImageUpdatePreview)
+            self.ShowPreviewMap.ImageUpdate.connect(self.ImageUpdatePreview)"""
 
     def ActivateOtherTab(self):
         config.ViewActivate=0
@@ -142,8 +144,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if config.ViewActivate==2:
             if (Disparity_list[5] > 0):
                 depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
-                changeInX = Disparity_list[3] - Disparity_list[6][0]
-                changeInY = Disparity_list[4] - Disparity_list[6][1]
+                changeInX = (Disparity_list[3]/1.6) - Disparity_list[6][0]
+                changeInY = (Disparity_list[4]/1.6) - Disparity_list[6][1]
                 theta_angle= np.degrees(math.atan2(changeInY,changeInX))
             else:
                 depth = 0
@@ -152,13 +154,51 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.Angle_Alpha.setText('{0:1d}'.format(int(theta_angle)))
             gtts=gTTS (text = "Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)), lang='es', slow=False)
             self.textTovoice(gtts)
-            
+    
+    def pandas_to_str(self,clase,distancia,orientacion,position_commands):
+        df = pd.DataFrame({ 
+            'Clase' : [clase],
+            'Distancia' : [distancia],
+            'Orientación' : [orientacion],
+            'Posición' : [position_commands]})
+        return df.to_string(col_space =14,justify = "justify")
+
+    def Distance_SoundPrueba(self):
+        #self.ShowPreviewMap.start()
+        config.ViewActivate=2
+        self.Sound=True
+        if(self.Sound & self.Inference):
+            self.Next_1.setEnabled(True)
+        #self.ShowDepthMap.disparityLog.connect(self.disparityList)
+        
+    def Inference_PreviewPrueba(self):
+        self.Inference=True
+        self.Sound=True
+        self.ShowPreviewMap.stop()
+        if(self.Sound & self.Inference):
+            self.Next_1.setEnabled(True)
+        self.ShowInferenceModel = ShowInferenceModel(self.path,self.ActivateRectification)
+        if self.ShowInferenceModel.isFinished:
+            config.ViewActivate=3
+            self.ShowInferenceModel.start()
+            self.ShowInferenceModel.ObjectsDetect.connect(self.UpdateinferenceList)
+            self.ShowInferenceModel.ImageUpdate.connect(self.Updateinference)
+    def Updateinference(self, Image):
+        if config.ViewActivate==3:
+            self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
+        elif config.ViewActivate==4:
+            self.Preview_camera_3.setPixmap(QPixmap.fromImage(Image))
+
+    def UpdateinferenceList(self, ListDetected):
+        if config.ViewActivate==3:
+            self.class_label.setText(str(ListDetected[0][:]))
+            self.score.setText(str(ListDetected[1]))
         elif config.ViewActivate==4:
             position_commands=''
-            if (Disparity_list[5] > 0 and self.variableMap!=NULL):
-                depth = (Disparity_list[0]/1.6) * (-Disparity_list[2] / Disparity_list[5])
-                changeInX = Disparity_list[3] - self.variableMap[2][0]
-                changeInY = Disparity_list[4] - self.variableMap[2][1]
+            if (ListDetected[3] > 0):
+                depth = (float(self.Fx_left_camera.text())/1.6) * -(float(self.Baseline_depth.text()) / ListDetected[3])
+                changeInX = (float(self.Cx_left_camera.text())/1.6)   - ListDetected[2][0]
+                changeInY = (float(self.Cy_left_camera.text())/1.6)   - ListDetected[2][1]
                 theta_angle= np.degrees(math.atan2(changeInY,-changeInX))
             else:
                 depth = 0
@@ -180,53 +220,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 position_commands='la diagonal izquierda abajo'
             elif theta_angle>=-105 and theta_angle<75:
                 position_commands='adelante abajo'
-            print("Profundidad " + '{0:.2f}'.format(depth / 1000) + "m"+" Angulo delta: "+'{0:1d}'.format(int(theta_angle)))
-            self.ObjectReconice_log_2.setText(self.pandas_to_str(self.variableMap[0][:],depth,theta_angle,position_commands))
+            self.ObjectReconice_log_2.setStyleSheet('color: white')
+            self.ObjectReconice_log_2.setFont(QtGui.QFont("Monospace"))
+            self.ObjectReconice_log_2.setText(self.pandas_to_str(ListDetected[0],'{0:.2f}'.format(depth / 1000) ,theta_angle,position_commands))
             self.ObjectReconice_log_2.showMaximized()
-        if config.ViewActivate!=3:
-            config.ViewActivate=1
-    
-    def pandas_to_str(self,clase,distancia,orientacion,position_commands):
-        df = pd.DataFrame({ 
-            'Clase' : clase,
-            'Distancia' : distancia,
-            'Orientación' : orientacion,
-            'Posición' : position_commands})
-        return df.to_string(col_space =14,justify = "justify")
-
-    def Distance_SoundPrueba(self):
-        config.ViewActivate=2
-        self.Sound=True
-        if(self.Sound & self.Inference):
-            self.Next_1.setEnabled(True)
-        self.ShowDepthMap.disparityLog.connect(self.disparityList)
-        
-    def Inference_PreviewPrueba(self):
-        self.Inference=True
-        if(self.Sound & self.Inference):
-            self.Next_1.setEnabled(True)
-        self.ShowInferenceModel = ShowInferenceModel(self.path,self.ActivateRectification)
-        if self.ShowInferenceModel.isFinished:
-            config.ViewActivate=3
-            self.ShowInferenceModel.start()
-            self.ShowInferenceModel.ImageUpdate.connect(self.Updateinference)
-            self.ShowInferenceModel.ObjectsDetect.connect(self.UpdateinferenceList)
-    
-    def Updateinference(self, Image):
-        self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
-
-    def UpdateinferenceList(self, ListDetected):
-        self.variableMap=ListDetected
-        if config.ViewActivate==3:
-            self.class_label.setText(str(ListDetected[0][:]))
-            self.score.setText(str(ListDetected[1]))
+            self.gtts=gTTS (text = "El objeto "+ListDetected[0]+"esta a " + '{0:.2f}'.format(depth / 1000) + "m, "+position_commands, lang='es', slow=False)
+            
         
     def Local_MapLog(self):
         config.ViewActivate=4
         if(self.Sound & self.Inference):
             self.Accept_2.setEnabled(True)
         self.ShowInferenceModel.ObjectsDetect.connect(self.UpdateinferenceList)
-        self.ShowDepthMap.disparityLog.connect(self.disparityList)
+        self.ShowInferenceModel.ImageUpdate.connect(self.Updateinference)
     
     def ActivateUDV(self):
         msgBox = QMessageBox()
@@ -237,7 +243,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         returnValue = msgBox.exec()
         if returnValue == QMessageBox.Ok:
-            print('OK clicked')
+            self.textTovoice(self.gtts)
 
     def textTovoice(self,tts) :
         # convert to file-like object

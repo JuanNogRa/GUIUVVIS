@@ -4,17 +4,15 @@ Created on Sun Nov  7 14:41:22 2021
 
 @author: juano
 """
-from asyncio.windows_events import NULL
 import numpy as np
 from PyQt5.QtGui import QImage
 from PyQt5.QtCore import pyqtSignal,QThread, Qt, QMutex 
 import configparser
 import cv2
 import config
-import torch
 import numpy as np
 from tflite_runtime.interpreter import Interpreter
-import tensorflow as tf
+#import tensorflow as tf
 import cv2
 
 left_rect=np.zeros((1,1,1), np.uint8) 
@@ -40,7 +38,7 @@ class ShowImageOnInterface(QThread):
     def run(self):
         global left_rect, right_rect
         self.ThreadActive = True
-        cap = cv2.VideoCapture(1,cv2.CAP_MSMF)
+        cap = cv2.VideoCapture(0)
         image_size = Resolution()
         image_size.width = 1280
         image_size.height = 720
@@ -316,7 +314,7 @@ class ShowInferenceModel(QThread):
         while self.ThreadActive:
             mutex.lock()
             image=left_rect
-            frame = cv2.resize(left_rect, (320,320), interpolation= cv2.INTER_LINEAR)
+            frame = cv2.resize(image, (320,320), interpolation= cv2.INTER_LINEAR)
             input_data = np.expand_dims(frame, 0)
             # Normalize pixel values if using a floating model (i.e. if model is non-quantized)
             if floating_model:
@@ -327,9 +325,9 @@ class ShowInferenceModel(QThread):
 
             """Output data"""
             output_data = self.interpreter.get_tensor(output_details[0]['index'])  # get tensor  x(1, 25200, 7)
-            xyxy, classes, scores, selected_indices = self.YOLOdetect(output_data) #boxes(x,y,x,y), classes(int), scores(float) [25200]
-            selected_indices=selected_indices.numpy()
-            nms_classes=[]
+            xyxy, classes, scores = self.YOLOdetect(output_data) #boxes(x,y,x,y), classes(int), scores(float) [25200]
+#             selected_indices=selected_indices.numpy()
+            """nms_classes=[]
             nms_xyxy=[]
             nms_score=[]
             for i in range(len(selected_indices)):
@@ -338,13 +336,12 @@ class ShowInferenceModel(QThread):
                 nms_xyxy.append([xyxy[0][selected_indices[i]], xyxy[1][selected_indices[i]], xyxy[2][selected_indices[i]], xyxy[3][selected_indices[i]]])
             classes=nms_classes
             xyxy=nms_xyxy
-            scores=nms_score
+            scores=nms_score"""
             labels = ['Armario', 'Bañera', 'Bote de Basura', 'Cama', 'Ducha', 'Escaleras', 'Lavamanos', 'Lavaplatos', 'Sanitario']
-            image=self.plot_boxes(scores, xyxy, image, classes,labels)
-            if config.ViewActivate==3:
-                convertToQtformat = QImage(frame.data, frame.shape[1], frame.shape[0], QImage.Format_RGB888)   
-                Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-                self.ImageUpdate.emit(Pic)
+            image=self.plot_boxes(scores, xyxy, image, classes,labels)            
+            convertToQtformat = QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888)   
+            Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.ImageUpdate.emit(Pic)
             mutex.unlock()
 
     def load_model(self):
@@ -369,15 +366,15 @@ class ShowInferenceModel(QThread):
         boxes = np.squeeze(output_data[..., :4])    # boxes  [25200, 4]
         scores = np.squeeze( output_data[..., 4:5]) # confidences  [25200, 1]
         classes = self.classFilter(output_data[..., 5:]) # get classes
-        selected_indices = tf.image.non_max_suppression(
+        """selected_indices = tf.image.non_max_suppression(
         boxes, scores, 1, iou_threshold=0.5,
         score_threshold=float('-inf'), name=None
-        )
+        )"""
         # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
         x, y, w, h = boxes[..., 0], boxes[..., 1], boxes[..., 2], boxes[..., 3] #xywh
         xyxy = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]  # xywh to xyxy   [4, 25200]
 
-        return xyxy, classes, scores, selected_indices  # output is boxes(x,y,x,y), classes(int), scores(float) [predictions length]
+        return xyxy, classes, scores  # output is boxes(x,y,x,y), classes(int), scores(float) [predictions length]
 
     def plot_boxes(self, scores, xyxy, image, classes,labels):
         """
@@ -386,10 +383,21 @@ class ShowInferenceModel(QThread):
         :param frame: Frame which has been scored.
         :return: Frame with bounding boxes and labels ploted on it.
         """
-        Emitir=[NULL]
-        imH, imW, _ = image.shape 
+        Emitir=[]
+        imH, imW, _ = image.shape
+        indices=self.NMS(xyxy)
+        nms_classes=[]
+        nms_xyxy=[]
+        nms_score=[]
+        for i in range(len(indices)):
+            nms_classes.append(classes[indices[i]])
+            nms_score.append(scores[indices[i]])
+            nms_xyxy.append([xyxy[0][indices[i]], xyxy[1][indices[i]], xyxy[2][indices[i]], xyxy[3][indices[i]]])
+        classes=nms_classes
+        xyxy=nms_xyxy
+        scores=nms_score
         for i in range(len(scores)):
-            if ((scores[i] > 0.4) and (scores[i] <= 1.0)):
+            if ((scores[i] > 0.5) and (scores[i] <= 1.0) and (classes[i] !=5)):
                 xmin = int(max(1,(xyxy[i][0] * imW)))
                 ymin = int(max(1,(xyxy[i][1] * imH)))
                 xmax = int(min(imH,(xyxy[i][2] * imW)))
@@ -397,15 +405,19 @@ class ShowInferenceModel(QThread):
                 
                 if config.ViewActivate==4:
                     medium_Point_x = int((xmin + xmax)/2)
-                    medium_Point_y = int((ymin + ymax)/2)
-                    scale_x=medium_Point_x
-                    scale_y=medium_Point_y
-                    Emitir=[self.class_to_label(labels[i]), scores[i], [scale_x, scale_y]]
-                    print(str(Emitir))
-                elif config.ViewActivate==3:
-                    bgr = (0, 255, 0)
+                    medium_Point_y = int((xmax + ymax)/2)
+                    Depth = self.DepthMapAsync(medium_Point_x,medium_Point_y)
                     cv2.rectangle(image, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
-
+                    object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
+                    label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
+                    labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) # Get font size
+                    label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
+                    cv2.rectangle(image, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in
+                    cv2.putText(image, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
+                    Emitir=[labels[int(classes[i])], scores[i], [medium_Point_x, medium_Point_y], Depth]
+                    
+                elif config.ViewActivate==3:
+                    cv2.rectangle(image, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
                     # Draw label
                     object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
                     label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
@@ -413,10 +425,92 @@ class ShowInferenceModel(QThread):
                     label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
                     cv2.rectangle(image, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in
                     cv2.putText(image, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
-                    Emitir=[self.class_to_label(labels[i]), scores[i], [0, 0]]
+                    Emitir=[label, scores[i], [0, 0], 0]
                 self.ObjectsDetect.emit(Emitir)  
         return image
+    
+    def NMS(self,boxes):
+            # Return an empty list, if no boxes given
+        if len(boxes) == 0:
+            return []
+        x1 = boxes[0][:]  # x coordinate of the top-left corner
+        y1 = boxes[1][:]  # y coordinate of the top-left corner
+        x2 = boxes[2][:]  # x coordinate of the bottom-right corner
+        y2 = boxes[3][:]  # y coordinate of the bottom-right corner
+        # Compute the area of the bounding boxes and sort the bounding
+        # Boxes by the bottom-right y-coordinate of the bounding box
+        areas = (x2 - x1 + 1) * (y2 - y1 + 1) # We add 1, because the pixel at the start as well as at the end counts
+        # The indices of all boxes at start. We will redundant indices one by one.
+        indices = np.arange(len(x1))
+        for i,box in enumerate(boxes):
+            # Create temporary indices  
+            temp_indices = indices[indices!=i]
+            # Find out the coordinates of the intersection box
+            xx1 = np.maximum(box[0], boxes[0][temp_indices])
+            yy1 = np.maximum(box[1], boxes[1][temp_indices])
+            xx2 = np.minimum(box[2], boxes[2][temp_indices])
+            yy2 = np.minimum(box[3], boxes[3][temp_indices])
+            # Find out the width and the height of the intersection box
+            w = np.maximum(0, xx2 - xx1 + 1)
+            h = np.maximum(0, yy2 - yy1 + 1)
+            # compute the ratio of overlap
+            overlap = (w * h) / areas[temp_indices]
+            # if the actual boungding box has an overlap bigger than treshold with any other box, remove it's index  
+            if np.any(overlap) > 0.8:
+                indices = indices[indices != i]
+        #return only the boxes at the remaining indices
+        return indices
+        
+    def DepthMapAsync(self,scale_x,scale_y):
+        max_disparity = 128
+        wls_lmbda = 800
+        wls_sigma = 1.2
+        stereoSGBM = cv2.StereoSGBM_create(
+        minDisparity=0,
+        numDisparities = max_disparity, # max_disp has to be dividable by 16 f. E. HH 192, 256
+#             blockSize=window_size,
+#             P1=8 * window_size ** 2,       # 8*number_of_image_channels*SADWindowSize*SADWindowSize
+#             P2=32 * window_size ** 2,      # 32*number_of_image_channels*SADWindowSize*SADWindowSize
+#             disp12MaxDiff=1,
+#             uniquenessRatio=15,
+#             speckleWindowSize=0,
+#             speckleRange=2,
+#             preFilterCap=63,
+#             mode=cv2.STEREO_SGBM_MODE_HH
+        )
 
-    def stop(self):
-        self.ThreadActive = False
-        self.quit()
+        wls_filter = cv2.ximgproc.createDisparityWLSFilter(stereoSGBM)
+        wls_filter.setLambda(wls_lmbda)
+        wls_filter.setSigmaColor(wls_sigma)
+
+        # remember to convert to grayscale (as the disparity matching works on grayscale)
+
+        grayL = cv2.cvtColor(left_rect,cv2.COLOR_BGR2GRAY)
+        grayR = cv2.cvtColor(right_rect,cv2.COLOR_BGR2GRAY)
+    
+        # perform preprocessing - raise to the power, as this subjectively appears
+        # to improve subsequent disparity calculation
+
+        grayL = np.power(grayL, 0.75).astype('uint8')
+        grayR = np.power(grayR, 0.75).astype('uint8')
+    
+        left_matcher=stereoSGBM
+        right_matcher = cv2.ximgproc.createRightMatcher(left_matcher)
+    
+        displ = left_matcher.compute(cv2.UMat(grayL),cv2.UMat(grayR))  # .astype(np.float32)/16
+        dispr = right_matcher.compute(cv2.UMat(grayR),cv2.UMat(grayL))  # .astype(np.float32)/16
+        displ = np.int16(cv2.UMat.get(displ))
+        dispr = np.int16(cv2.UMat.get(dispr))
+        disparity = wls_filter.filter(displ, grayL, None, dispr)
+        
+        # scale the disparity to 8-bit for viewing
+        # divide by 16 and convert to 8-bit image (then range of values should
+        # be 0 -> max_disparity) but in fact is (-1 -> max_disparity - 1)
+        # so we fix this also using a initial threshold between 0 and max_disparity
+        # as disparity=-1 means no disparity available
+        _, disparity = cv2.threshold(disparity,0, max_disparity * 16, cv2.THRESH_TOZERO)
+        disparity_scaled = (disparity / 16.).astype(np.uint8) 
+        Image = cv2.applyColorMap((disparity_scaled * (256. / max_disparity)).astype(np.uint8), cv2.COLORMAP_HOT)
+        #Image = cv2.cvtColor(disparity_scaled, cv2.COLOR_GRAY2BGR)            
+        Depth=(disparity_scaled[scale_y, scale_x])
+        return Depth
