@@ -1,2 +1,2 @@
 # GUIUVVIS
- 
+La interfaz de usuario de UVVIS se implementó mediante QtDesigner para Python, la cual es una herramienta con entorno gráfico que mediante acciones de selección y arrastre brinda la posibilidad de crear fácilmente una GUI. Se implementó para un prototipo que permite realizar inferencias utilizando un modelo de detección de objetos conocido como YOLOv5 y calcular las distancias con una cámara ZED utilizando el modo UVC. En el momento tiene dos versiones, la versión Windows permite para realizar la inferencia utilizar PyTorch y para la Raspberry Pi 4 TensorFlow Lite. 
