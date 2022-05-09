@@ -45,10 +45,10 @@ class ShowImageOnInterface(QThread):
         # Set the video resolution to HD720
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, image_size.width*2)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, image_size.height)
-        
         if self.path!="":
             camera_matrix_left, camera_matrix_right, map_left_x, map_left_y, map_right_x, map_right_y, left_param, right_param, camera_parameter = self.init_calibration(self.path, image_size)
             self.ParamsLabels.emit([left_param,right_param,camera_parameter])
+        
         while self.ThreadActive:
             mutex.lock()
             ret, frame = cap.read()
@@ -56,7 +56,7 @@ class ShowImageOnInterface(QThread):
                 # Extract left and right images from side-by-side
                 left_right_image = np.split(frame, 2, axis=1)
                 #print(str(left_right_image[1].shape))
-                if self.path!="" and self.activateRectification==True:
+                if self.activateRectification==True:
                     left_rect = cv2.remap(left_right_image[0], map_left_x, map_left_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
                     right_rect = cv2.remap(left_right_image[1], map_right_x, map_right_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
                     Image = cv2.cvtColor(left_rect, cv2.COLOR_BGR2RGB)
@@ -268,7 +268,7 @@ class ShowPreviewMap(QThread):
         global scale_x, scale_y
         while self.ThreadActive:
             mutex.lock()
-            if self.path!="" and self.activateRectification==True:
+            if self.activateRectification==True:
                 if config.ViewActivate==1:
                     Image = cv2.cvtColor(left_rect, cv2.COLOR_BGR2RGB)
                     scale_x = int(config.x*(Image.shape[1]/360))
@@ -285,7 +285,7 @@ class ShowPreviewMap(QThread):
         self.ThreadActive = False
         self.quit()
 
-
+import time
 class ShowInferenceModel(QThread):
     ImageUpdate = pyqtSignal(QImage)
     ObjectsDetect = pyqtSignal(list)
@@ -301,6 +301,15 @@ class ShowInferenceModel(QThread):
 
     def run(self):
         self.ThreadActive = True
+        cap = cv2.VideoCapture(0)
+        image_size = Resolution()
+        image_size.width = 1280
+        image_size.height = 720
+        # Set the video resolution to HD720
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, image_size.width*2)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, image_size.height)
+        if self.path!="":
+            camera_matrix_left, camera_matrix_right, map_left_x, map_left_y, map_right_x, map_right_y, left_param, right_param, camera_parameter = self.init_calibration(self.path, image_size)
         #get input and output tensors
         # Get model details
         input_details = self.interpreter.get_input_details()
@@ -311,8 +320,27 @@ class ShowInferenceModel(QThread):
         floating_model = (input_details[0]['dtype'] == np.float32)
 
         input_std = 255
+        
+        # used to record the time when we processed last frame
+        prev_frame_time = 0
+ 
+        # used to record the time at which we processed current frame
+        new_frame_time = 0
         while self.ThreadActive:
             mutex.lock()
+            new_frame_time = time.time() # start time of the loop
+            ret, frame = cap.read()
+            if ret:
+                # Extract left and right images from side-by-side
+                left_right_image = np.split(frame, 2, axis=1)
+                #print(str(left_right_image[1].shape))
+                if self.activateRectification==True:
+                    left_rect = cv2.remap(left_right_image[0], map_left_x, map_left_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
+                    right_rect = cv2.remap(left_right_image[1], map_right_x, map_right_y, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_TRANSPARENT)
+                    Image = cv2.cvtColor(left_rect, cv2.COLOR_BGR2RGB)
+                    Image1 = cv2.cvtColor(right_rect, cv2.COLOR_BGR2RGB)
+                    left_rect = cv2.resize(Image, (800,600), interpolation= cv2.INTER_LINEAR)
+                    right_rect = cv2.resize(Image1, (800,600), interpolation= cv2.INTER_LINEAR)
             image=left_rect
             frame = cv2.resize(image, (320,320), interpolation= cv2.INTER_LINEAR)
             input_data = np.expand_dims(frame, 0)
@@ -337,11 +365,22 @@ class ShowInferenceModel(QThread):
             classes=nms_classes
             xyxy=nms_xyxy
             scores=nms_score"""
-            labels = ['Armario', 'Bañera', 'Bote de Basura', 'Cama', 'Ducha', 'Escaleras', 'Lavamanos', 'Lavaplatos', 'Sanitario']
-            image=self.plot_boxes(scores, xyxy, image, classes,labels)            
-            convertToQtformat = QImage(image.data, image.shape[1], image.shape[0], QImage.Format_RGB888)   
+            labels = ['Armario', 'Bote de Basura', 'Cama', 'Ducha', 'Electrodomestico', 'Escaleras', 'Lavamanos', 'Lavaplatos', 'Matera', 'Mesa', 'Otro Obstaculo', 'Persona', 'Puerta', 'Sanitario', 'Silla', 'Ventana']
+            temp_image=self.plot_boxes(scores, xyxy, image, classes,labels)
+            # fps will be number of frame processed in given time frame
+            # since their will be most of time error of 0.001 second
+            # we will be subtracting it to get more accurate result
+            fps = 1/(new_frame_time-prev_frame_time)
+            prev_frame_time = new_frame_time
+             
+            # converting the fps to string so that we can display it on frame
+            # by using putText function
+            fps = str(fps)
+            print('FPS '+fps)
+            convertToQtformat = QImage(temp_image.data, temp_image.shape[1], temp_image.shape[0], QImage.Format_RGB888)   
             Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self.ImageUpdate.emit(Pic)
+             # Calculating the fps
             mutex.unlock()
 
     def load_model(self):
@@ -350,7 +389,7 @@ class ShowInferenceModel(QThread):
         :return: Trained Pytorch model.
         """
         # Load TFLite model and allocate tensors.
-        interpreter = Interpreter(model_path='bestPack2-fp16.tflite')
+        interpreter = Interpreter(model_path='best-fp16.tflite')
         #allocate the tensors
         interpreter.allocate_tensors()
         return interpreter
@@ -373,10 +412,10 @@ class ShowInferenceModel(QThread):
         # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
         x, y, w, h = boxes[..., 0], boxes[..., 1], boxes[..., 2], boxes[..., 3] #xywh
         xyxy = [x - w / 2, y - h / 2, x + w / 2, y + h / 2]  # xywh to xyxy   [4, 25200]
-
+        xyxy, scores, classes=self.nms(xyxy, scores, classes, 0.4)
         return xyxy, classes, scores  # output is boxes(x,y,x,y), classes(int), scores(float) [predictions length]
 
-    def plot_boxes(self, scores, xyxy, image, classes,labels):
+    def plot_boxes(self, scores, xyxy, image, classes, labels):
         """
         Takes a frame and its results as input, and plots the bounding boxes and label on to the frame.
         :param results: contains labels and coordinates predicted by model on the given frame.
@@ -385,27 +424,17 @@ class ShowInferenceModel(QThread):
         """
         Emitir=[]
         imH, imW, _ = image.shape
-        indices=self.NMS(xyxy)
-        nms_classes=[]
-        nms_xyxy=[]
-        nms_score=[]
-        for i in range(len(indices)):
-            nms_classes.append(classes[indices[i]])
-            nms_score.append(scores[indices[i]])
-            nms_xyxy.append([xyxy[0][indices[i]], xyxy[1][indices[i]], xyxy[2][indices[i]], xyxy[3][indices[i]]])
-        classes=nms_classes
-        xyxy=nms_xyxy
-        scores=nms_score
+#         picked_boxes, picked_score, picked_class=xyxy, scores, classes
         for i in range(len(scores)):
-            if ((scores[i] > 0.5) and (scores[i] <= 1.0) and (classes[i] !=5)):
+            if ((scores[i] > 0.4) and (scores[i] <= 1.0)):
                 xmin = int(max(1,(xyxy[i][0] * imW)))
                 ymin = int(max(1,(xyxy[i][1] * imH)))
                 xmax = int(min(imH,(xyxy[i][2] * imW)))
                 ymax = int(min(imW,(xyxy[i][3] * imH)))
                 
                 if config.ViewActivate==4:
-                    medium_Point_x = int((xmin + xmax)/2)
-                    medium_Point_y = int((xmax + ymax)/2)
+                    medium_Point_x = int((xmin + xmax)/2)-1
+                    medium_Point_y = int((xmax + ymax)/2)-1
                     Depth = self.DepthMapAsync(medium_Point_x,medium_Point_y)
                     cv2.rectangle(image, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
                     object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
@@ -429,37 +458,63 @@ class ShowInferenceModel(QThread):
                 self.ObjectsDetect.emit(Emitir)  
         return image
     
-    def NMS(self,boxes):
-            # Return an empty list, if no boxes given
-        if len(boxes) == 0:
-            return []
-        x1 = boxes[0][:]  # x coordinate of the top-left corner
-        y1 = boxes[1][:]  # y coordinate of the top-left corner
-        x2 = boxes[2][:]  # x coordinate of the bottom-right corner
-        y2 = boxes[3][:]  # y coordinate of the bottom-right corner
-        # Compute the area of the bounding boxes and sort the bounding
-        # Boxes by the bottom-right y-coordinate of the bounding box
-        areas = (x2 - x1 + 1) * (y2 - y1 + 1) # We add 1, because the pixel at the start as well as at the end counts
-        # The indices of all boxes at start. We will redundant indices one by one.
-        indices = np.arange(len(x1))
-        for i,box in enumerate(boxes):
-            # Create temporary indices  
-            temp_indices = indices[indices!=i]
-            # Find out the coordinates of the intersection box
-            xx1 = np.maximum(box[0], boxes[0][temp_indices])
-            yy1 = np.maximum(box[1], boxes[1][temp_indices])
-            xx2 = np.minimum(box[2], boxes[2][temp_indices])
-            yy2 = np.minimum(box[3], boxes[3][temp_indices])
-            # Find out the width and the height of the intersection box
-            w = np.maximum(0, xx2 - xx1 + 1)
-            h = np.maximum(0, yy2 - yy1 + 1)
-            # compute the ratio of overlap
-            overlap = (w * h) / areas[temp_indices]
-            # if the actual boungding box has an overlap bigger than treshold with any other box, remove it's index  
-            if np.any(overlap) > 0.8:
-                indices = indices[indices != i]
-        #return only the boxes at the remaining indices
-        return indices
+    def nms(self, bounding_boxes, confidence_score, classes, threshold):
+        # If no bounding boxes, return empty list
+        if len(bounding_boxes) == 0:
+            return [], []
+
+        # Bounding boxes
+        boxes = np.array(bounding_boxes)
+
+        # coordinates of bounding boxes
+        start_x = boxes[0,:]
+        start_y = boxes[1,:]
+        end_x = boxes[2,:]
+        end_y = boxes[3,:]
+
+        # Confidence scores of bounding boxes
+        score = np.array(confidence_score)
+        classbbox = np.array(classes)
+        # Picked bounding boxes
+        picked_boxes = []
+        picked_score = []
+        picked_class = []
+
+        # Compute areas of bounding boxes
+        areas = (end_x - start_x + 1) * (end_y - start_y + 1)
+
+        # Sort by confidence score of bounding boxes
+        order = np.argsort(score)
+
+        # Iterate bounding boxes
+        while order.size > 0:
+            # The index of largest confidence score
+            index = order[-1]
+            
+            # Pick the bounding box with largest confidence score
+            picked_boxes.append(boxes[:,index])
+            picked_score.append(confidence_score[index])
+            picked_class.append(classes[index])
+
+            # Compute ordinates of intersection-over-union(IOU)
+            x1 = np.maximum(start_x[index], start_x[order[:-1]])
+            x2 = np.minimum(end_x[index], end_x[order[:-1]])
+            y1 = np.maximum(start_y[index], start_y[order[:-1]])
+            y2 = np.minimum(end_y[index], end_y[order[:-1]])
+
+            # Compute areas of intersection-over-union
+            w = np.maximum(0.0, x2 - x1 + 1)
+            h = np.maximum(0.0, y2 - y1 + 1)
+            intersection = w * h
+
+            # Compute the ratio between intersection and union
+            ratio = intersection / (areas[index] + areas[order[:-1]] - intersection)
+
+            left = np.where(ratio < threshold)
+            order = order[left]
+
+        return picked_boxes, picked_score, picked_class
+
         
     def DepthMapAsync(self,scale_x,scale_y):
         max_disparity = 128
@@ -514,3 +569,94 @@ class ShowInferenceModel(QThread):
         #Image = cv2.cvtColor(disparity_scaled, cv2.COLOR_GRAY2BGR)            
         Depth=(disparity_scaled[scale_y, scale_x])
         return Depth
+    def init_calibration(self, calibration_file, image_size) :
+        global Disparity
+        cameraMarix_left = cameraMatrix_right = map_left_y = map_left_x = map_right_y = map_right_x = np.array([])
+    
+        config = configparser.ConfigParser()
+        config.read(calibration_file)
+    
+        check_data = True
+        resolution_str = ''
+        if image_size.width == 2208 :
+            resolution_str = '2K'
+        elif image_size.width == 1920 :
+            resolution_str = 'FHD'
+        elif image_size.width == 1280 :
+            resolution_str = 'HD'
+        elif image_size.width == 672 :
+            resolution_str = 'VGA'
+        else:
+            resolution_str = 'HD'
+            check_data = False
+        
+        T_ = np.array([-float(config['STEREO']['Baseline'] if 'Baseline' in config['STEREO'] else 0),
+                       float(config['STEREO']['TY_'+resolution_str] if 'TY_'+resolution_str in config['STEREO'] else 0),
+                       float(config['STEREO']['TZ_'+resolution_str] if 'TZ_'+resolution_str in config['STEREO'] else 0)])
+    
+        left_cam_cx = float(config['LEFT_CAM_'+resolution_str]['cx'] if 'cx' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_cam_cy = float(config['LEFT_CAM_'+resolution_str]['cy'] if 'cy' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_cam_fx = float(config['LEFT_CAM_'+resolution_str]['fx'] if 'fx' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_cam_fy = float(config['LEFT_CAM_'+resolution_str]['fy'] if 'fy' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_cam_k1 = float(config['LEFT_CAM_'+resolution_str]['k1'] if 'k1' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_cam_k2 = float(config['LEFT_CAM_'+resolution_str]['k2'] if 'k2' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_cam_p1 = float(config['LEFT_CAM_'+resolution_str]['p1'] if 'p1' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_cam_p2 = float(config['LEFT_CAM_'+resolution_str]['p2'] if 'p2' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_cam_p3 = float(config['LEFT_CAM_'+resolution_str]['p3'] if 'p3' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_cam_k3 = float(config['LEFT_CAM_'+resolution_str]['k3'] if 'k3' in config['LEFT_CAM_'+resolution_str] else 0)
+        left_param = [left_cam_cx, left_cam_cy, left_cam_fx, left_cam_fy, left_cam_k1, left_cam_k2, left_cam_p1, left_cam_p2
+        ,left_cam_p3, left_cam_k3]
+    
+        right_cam_cx = float(config['RIGHT_CAM_'+resolution_str]['cx'] if 'cx' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_cam_cy = float(config['RIGHT_CAM_'+resolution_str]['cy'] if 'cy' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_cam_fx = float(config['RIGHT_CAM_'+resolution_str]['fx'] if 'fx' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_cam_fy = float(config['RIGHT_CAM_'+resolution_str]['fy'] if 'fy' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_cam_k1 = float(config['RIGHT_CAM_'+resolution_str]['k1'] if 'k1' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_cam_k2 = float(config['RIGHT_CAM_'+resolution_str]['k2'] if 'k2' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_cam_p1 = float(config['RIGHT_CAM_'+resolution_str]['p1'] if 'p1' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_cam_p2 = float(config['RIGHT_CAM_'+resolution_str]['p2'] if 'p2' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_cam_p3 = float(config['RIGHT_CAM_'+resolution_str]['p3'] if 'p3' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_cam_k3 = float(config['RIGHT_CAM_'+resolution_str]['k3'] if 'k3' in config['RIGHT_CAM_'+resolution_str] else 0)
+        right_param = [right_cam_cx, right_cam_cy, right_cam_fx, right_cam_fy, right_cam_k1, right_cam_k2, right_cam_p1, right_cam_p2
+        ,right_cam_p3, right_cam_k3]
+
+        R_zed = np.array([float(config['STEREO']['RX_'+resolution_str] if 'RX_' + resolution_str in config['STEREO'] else 0),
+                          float(config['STEREO']['CV_'+resolution_str] if 'CV_' + resolution_str in config['STEREO'] else 0),
+                          float(config['STEREO']['RZ_'+resolution_str] if 'RZ_' + resolution_str in config['STEREO'] else 0)])
+        camera_parameter=[T_,R_zed]
+        R, _ = cv2.Rodrigues(R_zed)
+        cameraMatrix_left = np.array([[left_cam_fx, 0, left_cam_cx],
+                             [0, left_cam_fy, left_cam_cy],
+                             [0, 0, 1]])
+    
+        cameraMatrix_right = np.array([[right_cam_fx, 0, right_cam_cx],
+                              [0, right_cam_fy, right_cam_cy],
+                              [0, 0, 1]])
+    
+        distCoeffs_left = np.array([[left_cam_k1], [left_cam_k2], [left_cam_p1], [left_cam_p2], [left_cam_k3]])
+    
+        distCoeffs_right = np.array([[right_cam_k1], [right_cam_k2], [right_cam_p1], [right_cam_p2], [right_cam_k3]])
+    
+        T = np.array([[T_[0]], [T_[1]], [T_[2]]])
+        R1 = R2 = P1 = P2 = np.array([])
+    
+        R1, R2, P1, P2 = cv2.stereoRectify(cameraMatrix1=cameraMatrix_left,
+                                           cameraMatrix2=cameraMatrix_right,
+                                           distCoeffs1=distCoeffs_left,
+                                           distCoeffs2=distCoeffs_right,
+                                           R=R, T=T,
+                                           flags=cv2.CALIB_ZERO_DISPARITY,
+                                           alpha=0,
+                                           imageSize=(image_size.width, image_size.height),
+                                           newImageSize=(image_size.width, image_size.height))[0:4]
+    
+        map_left_x, map_left_y = cv2.initUndistortRectifyMap(cameraMatrix_left, distCoeffs_left, R1, P1, (image_size.width, image_size.height), cv2.CV_32FC1)
+        map_right_x, map_right_y = cv2.initUndistortRectifyMap(cameraMatrix_right, distCoeffs_right, R2, P2, (image_size.width, image_size.height), cv2.CV_32FC1)
+    
+        cameraMatrix_left = P1
+        cameraMatrix_right = P2
+
+        Disparity=[left_cam_fx, left_cam_fy, T_[0], left_cam_cx, left_cam_cy]
+        Disparity.append([0,0])
+        Disparity.append([0,0])
+        return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y, left_param, right_param, camera_parameter

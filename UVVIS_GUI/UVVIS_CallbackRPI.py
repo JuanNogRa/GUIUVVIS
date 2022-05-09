@@ -47,8 +47,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ShowPreviewMap = ShowPreviewMap(" ", False)
         self.ShowDepthMap = ShowDepthMap()
         self.Preview_camera.mousePressEvent = self.CalculateDepth
+        self.path="SN24105.conf"
         self.Inference=False
         self.Sound=False
+        self.DVU=False
     def CalculateDepth(self, event):
         config.x = event.pos().x()
         config.y = event.pos().y()   
@@ -130,6 +132,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     
     def Next_Config(self):
         config.ViewActivate=1
+        self.ShowImageOnInterface.stop()
         self.ShowDepthMap.stop()
         """self.ShowPreviewMap = ShowPreviewMap(self.path,self.ActivateRectification)
         if self.ShowPreviewMap.isFinished:
@@ -224,8 +227,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ObjectReconice_log_2.setFont(QtGui.QFont("Monospace"))
             self.ObjectReconice_log_2.setText(self.pandas_to_str(ListDetected[0],'{0:.2f}'.format(depth / 1000) ,theta_angle,position_commands))
             self.ObjectReconice_log_2.showMaximized()
-            self.gtts=gTTS (text = "El objeto "+ListDetected[0]+"esta a " + '{0:.2f}'.format(depth / 1000) + "m, "+position_commands, lang='es', slow=False)
-            
+            if self.DVU:
+                gtts=gTTS (text = "El objeto "+ListDetected[0]+"esta a " + '{0:.2f}'.format(depth / 1000) + "m, "+position_commands, lang='es', slow=False)
+                self.textTovoice(gtts)
         
     def Local_MapLog(self):
         config.ViewActivate=4
@@ -243,8 +247,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         returnValue = msgBox.exec()
         if returnValue == QMessageBox.Ok:
-            self.textTovoice(self.gtts)
-
+            self.DVU=True
+            self.lab_user.setText("Usuario con Discapacidad Visual")
+            self.lab_person.setPixmap(QtGui.QPixmap("Images/65734.png"))
+            self.lab_person.setScaledContents(True)
+            
     def textTovoice(self,tts) :
         # convert to file-like object
         fp = BytesIO()
