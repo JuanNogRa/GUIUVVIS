@@ -326,6 +326,8 @@ class ShowInferenceModel(QThread):
  
         # used to record the time at which we processed current frame
         new_frame_time = 0
+
+        counter=0
         while self.ThreadActive:
             mutex.lock()
             new_frame_time = time.time() # start time of the loop
@@ -341,6 +343,17 @@ class ShowInferenceModel(QThread):
                     Image1 = cv2.cvtColor(right_rect, cv2.COLOR_BGR2RGB)
                     left_rect = cv2.resize(Image, (800,600), interpolation= cv2.INTER_LINEAR)
                     right_rect = cv2.resize(Image1, (800,600), interpolation= cv2.INTER_LINEAR)
+                    # fps will be number of frame processed in given time frame
+                    # since their will be most of time error of 0.001 second
+                    # we will be subtracting it to get more accurate result
+                    ##fps = (new_frame_time-prev_frame_time)
+                    #prev_frame_time = new_frame_time
+                     
+                    # converting the fps to string so that we can display it on frame
+                    # by using putText function
+                    #fps = str(fps)
+                    #print('Segundos para rectificar '+fps)
+            #new_frame_time = time.time() # start time of the loop
             image=left_rect
             frame = cv2.resize(image, (320,320), interpolation= cv2.INTER_LINEAR)
             input_data = np.expand_dims(frame, 0)
@@ -367,17 +380,20 @@ class ShowInferenceModel(QThread):
             scores=nms_score"""
             labels = ['Armario', 'Bote de Basura', 'Cama', 'Ducha', 'Electrodomestico', 'Escaleras', 'Lavamanos', 'Lavaplatos', 'Matera', 'Mesa', 'Otro Obstaculo', 'Persona', 'Puerta', 'Sanitario', 'Silla', 'Ventana']
             temp_image=self.plot_boxes(scores, xyxy, image, classes,labels)
+            
+            convertToQtformat = QImage(temp_image.data, temp_image.shape[1], temp_image.shape[0], QImage.Format_RGB888)   
             # fps will be number of frame processed in given time frame
             # since their will be most of time error of 0.001 second
             # we will be subtracting it to get more accurate result
-            fps = 1/(new_frame_time-prev_frame_time)
+            fps += (1/(new_frame_time-prev_frame_time))
             prev_frame_time = new_frame_time
-             
+            counter+=1
             # converting the fps to string so that we can display it on frame
             # by using putText function
-            fps = str(fps)
-            print('FPS '+fps)
-            convertToQtformat = QImage(temp_image.data, temp_image.shape[1], temp_image.shape[0], QImage.Format_RGB888)   
+            if(counter==25):
+                fps = str(fps/25)
+                print('Segundos para inferencia '+fps)
+                counter=0
             Pic = convertToQtformat.scaled(360, 320, Qt.KeepAspectRatio, Qt.SmoothTransformation)
             self.ImageUpdate.emit(Pic)
              # Calculating the fps
@@ -389,7 +405,7 @@ class ShowInferenceModel(QThread):
         :return: Trained Pytorch model.
         """
         # Load TFLite model and allocate tensors.
-        interpreter = Interpreter(model_path='best-fp16.tflite')
+        interpreter = Interpreter(model_path='bestEnd-fp16.tflite')
         #allocate the tensors
         interpreter.allocate_tensors()
         return interpreter
@@ -569,6 +585,7 @@ class ShowInferenceModel(QThread):
         #Image = cv2.cvtColor(disparity_scaled, cv2.COLOR_GRAY2BGR)            
         Depth=(disparity_scaled[scale_y, scale_x])
         return Depth
+        
     def init_calibration(self, calibration_file, image_size) :
         global Disparity
         cameraMarix_left = cameraMatrix_right = map_left_y = map_left_x = map_right_y = map_right_x = np.array([])
@@ -660,3 +677,35 @@ class ShowInferenceModel(QThread):
         Disparity.append([0,0])
         Disparity.append([0,0])
         return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y, left_param, right_param, camera_parameter
+
+from gtts import gTTS
+class TTS_Output(QThread):
+    ObjectsDetect = pyqtSignal(list)
+    global scale_x, scale_y
+    def __init__(self):
+        """
+        Initializes the class with youtube url and output file.
+        """
+        QThread.__init__(self)
+
+    def run(self):
+        while self.ThreadActive:
+            self.textTovoice(config.gtts)
+    
+    def stop(self):
+        self.ThreadActive = False
+        self.quit()
+    
+    def textTovoice(self,tts) :
+        # convert to file-like object
+        fp = BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+            #--- play it ---
+        pygame.init()
+        pygame.mixer.init()
+        pygame.mixer.music.set_volume(self.dialAudioLevel.value()/100)
+        pygame.mixer.music.load(fp)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            pygame.time.Clock().tick(10)

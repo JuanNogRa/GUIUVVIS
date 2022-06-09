@@ -51,6 +51,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.Inference=False
         self.Sound=False
         self.DVU=False
+        self.list_class=[]
+        self.list_distancia=[]
+        self.list_orientacion=[]
+        self.list_comandos=[]
+        
     def CalculateDepth(self, event):
         config.x = event.pos().x()
         config.y = event.pos().y()   
@@ -186,6 +191,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ShowInferenceModel.start()
             self.ShowInferenceModel.ObjectsDetect.connect(self.UpdateinferenceList)
             self.ShowInferenceModel.ImageUpdate.connect(self.Updateinference)
+
     def Updateinference(self, Image):
         if config.ViewActivate==3:
             self.Preview_camera_2.setPixmap(QPixmap.fromImage(Image))
@@ -225,11 +231,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 position_commands='adelante abajo'
             self.ObjectReconice_log_2.setStyleSheet('color: white')
             self.ObjectReconice_log_2.setFont(QtGui.QFont("Monospace"))
-            self.ObjectReconice_log_2.setText(self.pandas_to_str(ListDetected[0],'{0:.2f}'.format(depth / 1000) ,theta_angle,position_commands))
+            self.list_class.append(ListDetected[0])
+            self.list_distancia.append('{0:.2f}'.format(depth/1000))
+            self.list_orientacion.append(theta_angle)
+            self.list_comandos.append(position_commands)
+            if (len(self.list_class)==5):
+                self.list_class=[]
+                self.list_distancia=[]
+                self.list_orientacion=[]
+                self.list_comandos=[]
+            self.ObjectReconice_log_2.setText(self.pandas_to_str(self.list_class, self.list_distancia, self.list_orientacion, self.list_comandos))
             self.ObjectReconice_log_2.showMaximized()
             if self.DVU:
-                gtts=gTTS (text = "El objeto "+ListDetected[0]+"esta a " + '{0:.2f}'.format(depth / 1000) + "m, "+position_commands, lang='es', slow=False)
-                self.textTovoice(gtts)
+                config.gtts=gTTS (text = "El objeto "+ListDetected[0]+"esta a " + '{0:.2f}'.format(depth / 1000) + "m, "+position_commands, lang='es', slow=False)
         
     def Local_MapLog(self):
         config.ViewActivate=4
