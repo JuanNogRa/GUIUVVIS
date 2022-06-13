@@ -1019,13 +1019,13 @@ class Ui_MainWindow(object):
 "}")
         self.groupBox_9.setObjectName("groupBox_9")
         self.ObjectReconice_log_2 = QtWidgets.QLabel(self.groupBox_9)
-        self.ObjectReconice_log_2.setGeometry(QtCore.QRect(10, 380, 761, 71))
+        self.ObjectReconice_log_2.setGeometry(QtCore.QRect(10, 300, 761, 151))
         self.ObjectReconice_log_2.setStyleSheet("color=rgb(255, 255, 255)")
         self.ObjectReconice_log_2.setText("")
         self.ObjectReconice_log_2.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.ObjectReconice_log_2.setObjectName("ObjectReconice_log_2")
         self.Preview_camera_3 = QtWidgets.QLabel(self.groupBox_9)
-        self.Preview_camera_3.setGeometry(QtCore.QRect(220, 30, 360, 320))
+        self.Preview_camera_3.setGeometry(QtCore.QRect(220, 30, 361, 241))
         self.Preview_camera_3.setStyleSheet("color:white;")
         self.Preview_camera_3.setAlignment(QtCore.Qt.AlignCenter)
         self.Preview_camera_3.setObjectName("Preview_camera_3")
@@ -1444,3 +1444,13 @@ class Ui_MainWindow(object):
         self.groupBox_6.setTitle(_translate("MainWindow", "Información Adicional"))
         self.lab_tab.setText(_translate("MainWindow", "<html><head/><body><p><br/></p></body></html>"))
         self.frame_drag.setToolTip(_translate("MainWindow", "Drag"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())

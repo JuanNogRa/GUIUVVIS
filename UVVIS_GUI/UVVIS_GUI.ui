@@ -2255,9 +2255,9 @@ Mapa Local</string>
                    <property name="geometry">
                     <rect>
                      <x>10</x>
-                     <y>380</y>
+                     <y>300</y>
                      <width>761</width>
-                     <height>71</height>
+                     <height>151</height>
                     </rect>
                    </property>
                    <property name="styleSheet">

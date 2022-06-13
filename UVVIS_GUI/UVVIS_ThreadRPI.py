@@ -678,7 +678,8 @@ class ShowInferenceModel(QThread):
         Disparity.append([0,0])
         return cameraMatrix_left, cameraMatrix_right, map_left_x, map_left_y, map_right_x, map_right_y, left_param, right_param, camera_parameter
 
-from gtts import gTTS
+import pygame
+from io import BytesIO
 class TTS_Output(QThread):
     ObjectsDetect = pyqtSignal(list)
     global scale_x, scale_y

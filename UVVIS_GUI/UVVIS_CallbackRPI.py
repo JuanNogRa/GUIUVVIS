@@ -51,6 +51,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.Inference=False
         self.Sound=False
         self.DVU=False
+        self.list_things=[]
         self.list_class=[]
         self.list_distancia=[]
         self.list_orientacion=[]
@@ -165,10 +166,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     
     def pandas_to_str(self,clase,distancia,orientacion,position_commands):
         df = pd.DataFrame({ 
-            'Clase' : [clase],
-            'Distancia' : [distancia],
-            'Orientación' : [orientacion],
-            'Posición' : [position_commands]})
+            'Clase' : clase,
+            'Distancia' : distancia,
+            'Orientación' : orientacion,
+            'Posición' : position_commands})
         return df.to_string(col_space =14,justify = "justify")
 
     def Distance_SoundPrueba(self):
@@ -235,15 +236,19 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.list_distancia.append('{0:.2f}'.format(depth/1000))
             self.list_orientacion.append(theta_angle)
             self.list_comandos.append(position_commands)
-            if (len(self.list_class)==5):
+            if (len(self.list_class)==10):
+                self.list_things = self.pandas_to_str(self.list_class, self.list_distancia, self.list_orientacion, self.list_comandos)
+                if self.DVU:
+                    self.list_things.sort_values(by=['Distancia'], inplace=True)
+                    for i in range(len(self.list_things)):
+                        config.gtts=gTTS (text = "El objeto "+self.list_things['Clase'].values[i]+"esta a " + '{0:.2f}'.self.list_things['Distancia'].values[i] + "m, "+self.list_things['Posición'].values[i], lang='es', slow=False)
                 self.list_class=[]
                 self.list_distancia=[]
                 self.list_orientacion=[]
                 self.list_comandos=[]
-            self.ObjectReconice_log_2.setText(self.pandas_to_str(self.list_class, self.list_distancia, self.list_orientacion, self.list_comandos))
+            self.ObjectReconice_log_2.setText(self.list_things)
             self.ObjectReconice_log_2.showMaximized()
-            if self.DVU:
-                config.gtts=gTTS (text = "El objeto "+ListDetected[0]+"esta a " + '{0:.2f}'.format(depth / 1000) + "m, "+position_commands, lang='es', slow=False)
+            
         
     def Local_MapLog(self):
         config.ViewActivate=4
